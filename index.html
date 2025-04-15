@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎉 Petopia 1000 Followers 達成 - Lucky Draw 2025 🎁</title>
+  <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(to right, #a8edea, #fed6e3);
+      font-family: 'Luckiest Guy', cursive;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    h1 {
+      color: #fff;
+      text-shadow: 2px 2px 8px #000;
+      margin-top: 0.5em;
+    }
+    select {
+      font-size: 1.2rem;
+      padding: 5px;
+      margin: 10px;
+      border-radius: 8px;
+    }
+    #wheel {
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      border: 10px solid #fff;
+      box-shadow: 0 0 30px #ffb6b9;
+      background: #eee;
+      position: relative;
+    }
+    #wheel::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .pointer {
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-top: none;
+      border-bottom: 30px solid #fff;
+      position: absolute;
+      top: -30px;
+      left: calc(50% - 20px);
+      z-index: 10;
+    }
+    
+    #spin {
+      margin-top: 20px;
+      font-size: 2rem;
+      background: #ffb6b9;
+      padding: 10px 30px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #333;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 2rem;
+      color: #fff;
+      text-shadow: 2px 2px 5px #000;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎉 PETOPIA 1000 FOLLOWERS 達成 - LUCKY DRAW 2025 🎁</h1>
+  <select id="giftSelector">
+    <option value="Gift1">🎁 Gift1</option>
+    <option value="Gift2">🎁 Gift2</option>
+    <option value="Gift3">🎁 Gift3</option>
+  </select>
+  <div id="wheel-container" style="position: relative;">
+    <canvas id="wheel" width="400" height="400"></canvas>
+    <div class="pointer"></div>
+  </div>
+  <button id="spin">Spin!</button>
+  <div id="result"></div>
+
+  <script>
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const spinBtn = document.getElementById("spin");
+    const resultEl = document.getElementById("result");
+    const giftSelector = document.getElementById("giftSelector");
+
+    let names = [];
+    let winners = { Gift1: [], Gift2: [], Gift3: [] };
+    let winnersPerGift = { Gift1: 1, Gift2: 1, Gift3: 3 };
+
+    async function fetchNames() {
+      const res = await fetch("https://script.google.com/macros/s/AKfycbwUAkhb8vDKfjMFAjfzYWNj_R_lINxrP1WimI5Y6V38MaSc6FWaqIBbRBmGhX55c-5D7w/exec");
+      const all = await res.json();
+
+      const selected = giftSelector.value;
+      names = all
+        .filter(n => n.Selectedgifts === selected && !winners[selected].includes(n.name))
+        .flatMap(n => Array(n.multiple).fill(n.name));
+
+      drawWheel();
+    }
+
+    function drawWheel() {
+      const total = names.length;
+      const slice = 2 * Math.PI / total;
+      ctx.clearRect(0, 0, 400, 400);
+      for (let i = 0; i < total; i++) {
+        ctx.beginPath();
+        ctx.fillStyle = i % 3 === 0 ? "#f9f871" : i % 3 === 1 ? "#ffb6b9" : "#c1fba4";
+        ctx.moveTo(200, 200);
+        ctx.arc(200, 200, 200, slice * i, slice * (i + 1));
+        ctx.lineTo(200, 200);
+        ctx.fill();
+        ctx.save();
+        ctx.translate(200, 200);
+        ctx.rotate(slice * i + slice / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#333";
+        ctx.font = "16px sans-serif";
+        ctx.fillText(names[i], 180, 5);
+        ctx.restore();
+      }
+    }
+
+    function spinWheel() {
+      const selected = giftSelector.value;
+      if (winners[selected].length >= winnersPerGift[selected]) {
+        resultEl.innerHTML = `✅ <b>${selected}</b> 抽獎已完成！`;
+        return;
+      }
+
+      const total = names.length;
+      const slice = 2 * Math.PI / total;
+      const rand = Math.floor(Math.random() * total);
+      const angle = (3 * Math.PI / 2) - (rand * slice);
+
+      canvas.style.transition = "transform 5s ease-out";
+      canvas.style.transform = `rotate(${angle}rad)`;
+
+      setTimeout(() => {
+        const winner = names[rand];
+        winners[selected].push(winner);
+        resultEl.innerHTML = `🎉 中獎者：<b>${winner}</b>（${selected}）！`;
+        fetchNames();
+      }, 5000);
+    }
+
+    spinBtn.addEventListener("click", () => {
+      canvas.style.transition = "none";
+      canvas.style.transform = "rotate(0deg)";
+      setTimeout(spinWheel, 100);
+    });
+
+    giftSelector.addEventListener("change", fetchNames);
+    fetchNames();
+  </script>
+</body>
+</html>
