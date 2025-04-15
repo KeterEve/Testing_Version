@@ -1,41 +1,49 @@
-<!DOCTYPE html>
-<html lang="zh-HK">
+"<!DOCTYPE html>
+<html lang=""zh-HK"">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset=""UTF-8"" />
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"" />
   <title>🎉 Petopia 1000 Followers 達成 - Lucky Draw 2025 🎁</title>
-  <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
+  <link href=""https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap"" rel=""stylesheet"">
   <style>
     body {
       margin: 0;
       background: linear-gradient(to right, #a8edea, #fed6e3);
-      font-family: 'Luckiest Guy', cursive;
+      font-family: 'Luckiest Guy', cursive, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100vh;
+      overflow: auto;
     }
     h1 {
       color: #fff;
       text-shadow: 2px 2px 8px #000;
-      margin-top: 0.5em;
+      margin: 0.5em 0;
+      font-size: 2rem;
+      text-align: center;
     }
     select {
       font-size: 1.2rem;
       padding: 5px;
       margin: 10px;
       border-radius: 8px;
+      font-family: inherit;
+    }
+    #wheel-container {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
     }
     #wheel {
-      width: 400px;
-      height: 400px;
+      width: 100%;
+      height: auto;
       border-radius: 50%;
       border: 10px solid #fff;
       box-shadow: 0 0 30px #ffb6b9;
       background: #eee;
-      position: relative;
+      display: block;
     }
     #wheel::after {
       content: '';
@@ -47,93 +55,146 @@
       background: #fff;
       border-radius: 50%;
       transform: translate(-50%, -50%);
+      z-index: 2;
     }
     .pointer {
       width: 0;
       height: 0;
       border-left: 20px solid transparent;
       border-right: 20px solid transparent;
-      border-top: none;
       border-bottom: 30px solid #fff;
       position: absolute;
-      top: -30px;
+      bottom: -40px;
       left: calc(50% - 20px);
-      z-index: 10;
+      z-index: 3;
     }
-    
-    #spin {
-      margin-top: 20px;
-      font-size: 2rem;
+    #spin, #show-winners {
+      margin: 10px;
+      font-size: 1.5rem;
       background: #ffb6b9;
-      padding: 10px 30px;
+      padding: 8px 20px;
       border-radius: 12px;
       border: none;
       cursor: pointer;
       box-shadow: 0 0 10px #333;
+      font-family: inherit;
+    }
+    #spin:disabled {
+      background: #ccc;
+      cursor: not-allowed;
     }
     #result {
-      margin-top: 20px;
-      font-size: 2rem;
+      margin: 10px;
+      font-size: 1.5rem;
       color: #fff;
       text-shadow: 2px 2px 5px #000;
+      text-align: center;
+      max-width: 90%;
+      word-wrap: break-word;
+    }
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+      select, #spin, #show-winners {
+        font-size: 1rem;
+        padding: 6px 15px;
+      }
+      #result {
+        font-size: 1.2rem;
+      }
+      #wheel-container {
+        max-width: 80vw;
+      }
     }
   </style>
 </head>
 <body>
   <h1>🎉 PETOPIA 1000 FOLLOWERS 達成 - LUCKY DRAW 2025 🎁</h1>
-  <select id="giftSelector">
-    <option value="Gift1">🎁 Gift1</option>
-    <option value="Gift2">🎁 Gift2</option>
-    <option value="Gift3">🎁 Gift3</option>
+  <select id=""giftSelector"">
+    <option value=""Gift1"">🎁 Gift1</option>
+    <option value=""Gift2"">🎁 Gift2</option>
+    <option value=""Gift3"">🎁 Gift3</option>
   </select>
-  <div id="wheel-container" style="position: relative;">
-    <canvas id="wheel" width="400" height="400"></canvas>
-    <div class="pointer"></div>
+
+  <div id=""wheel-container"">
+    <canvas id=""wheel""></canvas>
+    <div class=""pointer""></div>
   </div>
-  <button id="spin">Spin!</button>
-  <div id="result"></div>
+
+  <button id=""spin"">Spin!</button>
+  <button id=""show-winners"">查看中獎者</button>
+  <div id=""result""></div>
 
   <script>
-    const canvas = document.getElementById("wheel");
-    const ctx = canvas.getContext("2d");
-    const spinBtn = document.getElementById("spin");
-    const resultEl = document.getElementById("result");
-    const giftSelector = document.getElementById("giftSelector");
+    const canvas = document.getElementById(""wheel"");
+    const ctx = canvas.getContext(""2d"");
+    const spinBtn = document.getElementById(""spin"");
+    const showWinnersBtn = document.getElementById(""show-winners"");
+    const resultEl = document.getElementById(""result"");
+    const giftSelector = document.getElementById(""giftSelector"");
 
     let names = [];
     let winners = { Gift1: [], Gift2: [], Gift3: [] };
     let winnersPerGift = { Gift1: 1, Gift2: 1, Gift3: 3 };
+    let cachedData = null;
+
+    function setCanvasSize() {
+      const container = document.getElementById(""wheel-container"");
+      const size = Math.min(container.offsetWidth, 400);
+      canvas.width = size;
+      canvas.height = size;
+      drawWheel();
+    }
 
     async function fetchNames() {
-      const res = await fetch("https://script.google.com/macros/s/AKfycbwUAkhb8vDKfjMFAjfzYWNj_R_lINxrP1WimI5Y6V38MaSc6FWaqIBbRBmGhX55c-5D7w/exec");
-      const all = await res.json();
+      resultEl.innerHTML = ""⏳ 正在加載..."";
+      try {
+        if (!cachedData) {
+          const res = await fetch(""https://script.google.com/macros/s/AKfycbxJsIzdgxiXWO6E6YPtfxZNEpZGKagjtP3lW2Rtx6-x6OkAMIb_SLWaGw-7X4x2Cuijvg/exec"");
+          if (!res.ok) throw new Error(""API請求失敗"");
+          cachedData = await res.json();
+        }
+        if (!Array.isArray(cachedData)) throw new Error(""數據格式錯誤"");
 
-      const selected = giftSelector.value;
-      names = all
-        .filter(n => n.Selectedgifts === selected && !winners[selected].includes(n.name))
-        .flatMap(n => Array(n.multiple).fill(n.name));
+        const selected = giftSelector.value;
+        names = cachedData
+          .filter(n => n.Selectedgifts === selected && !winners[selected].includes(n.name))
+          .flatMap(n => Array(n.multiple || 1).fill(n.name));
 
-      drawWheel();
+        if (names.length === 0) {
+          resultEl.innerHTML = ""⚠️ 沒有可用的參與者"";
+        } else {
+          resultEl.innerHTML = """";
+        }
+        drawWheel();
+      } catch (e) {
+        resultEl.innerHTML = ""❌ 無法加載數據，請稍後重試"";
+        console.error(e);
+      }
     }
 
     function drawWheel() {
       const total = names.length;
+      const size = canvas.width;
+      ctx.clearRect(0, 0, size, size);
+      if (total === 0) return;
+
       const slice = 2 * Math.PI / total;
-      ctx.clearRect(0, 0, 400, 400);
       for (let i = 0; i < total; i++) {
         ctx.beginPath();
-        ctx.fillStyle = i % 3 === 0 ? "#f9f871" : i % 3 === 1 ? "#ffb6b9" : "#c1fba4";
-        ctx.moveTo(200, 200);
-        ctx.arc(200, 200, 200, slice * i, slice * (i + 1));
-        ctx.lineTo(200, 200);
+        ctx.fillStyle = i % 3 === 0 ? ""#f9f871"" : i % 3 === 1 ? ""#ffb6b9"" : ""#c1fba4"";
+        ctx.moveTo(size / 2, size / 2);
+        ctx.arc(size / 2, size / 2, size / 2, slice * i, slice * (i + 1));
+        ctx.lineTo(size / 2, size / 2);
         ctx.fill();
         ctx.save();
-        ctx.translate(200, 200);
+        ctx.translate(size / 2, size / 2);
         ctx.rotate(slice * i + slice / 2);
-        ctx.textAlign = "right";
-        ctx.fillStyle = "#333";
-        ctx.font = "16px sans-serif";
-        ctx.fillText(names[i], 180, 5);
+        ctx.textAlign = ""right"";
+        ctx.fillStyle = ""#333"";
+        ctx.font = `${Math.min(16, size / total)}px 'Luckiest Guy', sans-serif`;
+        ctx.fillText(names[i], size / 2 - 20, 5);
         ctx.restore();
       }
     }
@@ -142,33 +203,54 @@
       const selected = giftSelector.value;
       if (winners[selected].length >= winnersPerGift[selected]) {
         resultEl.innerHTML = `✅ <b>${selected}</b> 抽獎已完成！`;
+        spinBtn.disabled = false;
         return;
       }
 
       const total = names.length;
+      if (total === 0) {
+        resultEl.innerHTML = ""⚠️ 沒有可用的參與者"";
+        spinBtn.disabled = false;
+        return;
+      }
+
       const slice = 2 * Math.PI / total;
       const rand = Math.floor(Math.random() * total);
-      const angle = (3 * Math.PI / 2) - (rand * slice);
+      const angle = (3 * Math.PI / 2) - (rand * slice) + (slice / 2); // 調整指針對齊
 
-      canvas.style.transition = "transform 5s ease-out";
-      canvas.style.transform = `rotate(${angle}rad)`;
+      canvas.style.transition = ""transform 5s ease-out"";
+      canvas.style.transform = `rotate(${angle + 4 * 2 * Math.PI}rad)`; // 多旋轉幾圈
 
       setTimeout(() => {
         const winner = names[rand];
         winners[selected].push(winner);
         resultEl.innerHTML = `🎉 中獎者：<b>${winner}</b>（${selected}）！`;
         fetchNames();
+        spinBtn.disabled = false;
       }, 5000);
     }
 
-    spinBtn.addEventListener("click", () => {
-      canvas.style.transition = "none";
-      canvas.style.transform = "rotate(0deg)";
+    spinBtn.addEventListener(""click"", () => {
+      if (spinBtn.disabled) return;
+      spinBtn.disabled = true;
+      resultEl.innerHTML = """";
+      canvas.style.transition = ""none"";
+      canvas.style.transform = ""rotate(0deg)"";
       setTimeout(spinWheel, 100);
     });
 
-    giftSelector.addEventListener("change", fetchNames);
+    showWinnersBtn.addEventListener(""click"", () => {
+      resultEl.innerHTML = Object.entries(winners)
+        .map(([gift, names]) => `<b>${gift}</b>: ${names.join("", "") || ""無""}`)
+        .join(""<br>"");
+    });
+
+    giftSelector.addEventListener(""change"", fetchNames);
+    window.addEventListener(""resize"", setCanvasSize);
+
+    // 初始化
+    setCanvasSize();
     fetchNames();
   </script>
 </body>
-</html>
+</html>"
