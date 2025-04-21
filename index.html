@@ -64,12 +64,12 @@
       border-right: 20px solid transparent;
       border-bottom: 30px solid #fff;
       position: absolute;
-      bottom: -40px;
+      bottom: -60px; /* 向上調高 */
       left: calc(50% - 20px);
       z-index: 3;
     }
     #spin, #show-winners {
-      margin: 10px;
+      margin: 25px; /* 拉開與箭頭距離 */
       font-size: 1.5rem;
       background: #ffb6b9;
       padding: 8px 20px;
@@ -150,7 +150,6 @@
     async function fetchNames() {
       resultEl.innerHTML = "⏳ 正在加載...";
       try {
-        // 使用假數據模擬API響應
         cachedData = [
           { name: "張三", Selectedgifts: "Gift1", multiple: 2 },
           { name: "李四", Selectedgifts: "Gift1", multiple: 1 },
