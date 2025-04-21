@@ -16,7 +16,6 @@
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      overflow: auto;
     }
     h1 {
       color: #fff;
@@ -46,18 +45,6 @@
       box-shadow: 0 0 30px #ffb6b9;
       background: #eee;
       display: block;
-    }
-    #wheel::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 20px;
-      height: 20px;
-      background: #fff;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 2;
     }
     .pointer {
       width: 0;
@@ -96,7 +83,10 @@
     }
     @media (max-width: 600px) {
       h1 { font-size: 1.5rem; }
-      select, #spin, #show-winners { font-size: 1rem; padding: 6px 15px; }
+      select, #spin, #show-winners {
+        font-size: 1rem;
+        padding: 6px 15px;
+      }
       #result { font-size: 1.2rem; }
       #wheel-container { max-width: 80vw; }
     }
@@ -130,7 +120,7 @@
     let names = [];
     let fullNames = [];
     let winners = { Gift1: [], Gift2: [], Gift3: [] };
-    let winnersPerGift = { Gift1: 1, Gift2: 1, Gift3: 3 };
+    const winnersPerGift = { Gift1: 1, Gift2: 1, Gift3: 3 };
     let cachedData = null;
 
     function setCanvasSize() {
@@ -153,19 +143,16 @@
           { name: "林八", Selectedgifts: "Gift3", multiple: 2 },
           { name: "黃九", Selectedgifts: "Gift3", multiple: 1 }
         ];
-
         const selected = giftSelector.value;
-        const validData = cachedData.filter(n =>
-          n.Selectedgifts === selected && !winners[selected].includes(n.name)
-        );
-
-        names = validData.flatMap(n => Array(n.multiple || 1).fill(n.name));
+        names = cachedData
+          .filter(n => n.Selectedgifts === selected && !winners[selected].includes(n.name))
+          .flatMap(n => Array(n.multiple).fill(n.name));
         fullNames = [...names];
-
-        resultEl.innerHTML = names.length === 0 ? "⚠️ 沒有可用的參與者" : "";
+        resultEl.innerHTML = names.length ? "" : "⚠️ 沒有可用的參與者";
         drawWheel();
       } catch (e) {
-        resultEl.innerHTML = "❌ 無法加載資料，請稍後重試";
+        resultEl.innerHTML = "❌ 無法加載資料";
+        console.error(e);
       }
     }
 
@@ -173,8 +160,7 @@
       const total = fullNames.length;
       const size = canvas.width;
       ctx.clearRect(0, 0, size, size);
-      if (total === 0) return;
-
+      if (!total) return;
       const slice = 2 * Math.PI / total;
       for (let i = 0; i < total; i++) {
         ctx.beginPath();
@@ -201,14 +187,12 @@
         spinBtn.disabled = false;
         return;
       }
-
       const total = names.length;
-      if (total === 0) {
+      if (!total) {
         resultEl.innerHTML = "⚠️ 沒有可用的參與者";
         spinBtn.disabled = false;
         return;
       }
-
       const slice = 2 * Math.PI / total;
       const rand = Math.floor(Math.random() * total);
       const angle = (3 * Math.PI / 2) - (rand * slice) + (slice / 2);
@@ -220,6 +204,9 @@
       setTimeout(() => {
         winners[selected].push(winner);
         resultEl.innerHTML = `🎉 中獎者：<b>${winner}</b>（${selected}）！`;
+        names = names.filter((_, idx) => idx !== rand);
+        fullNames = [...names];
+        drawWheel();
         spinBtn.disabled = false;
       }, 5000);
     }
