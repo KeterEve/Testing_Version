@@ -211,7 +211,7 @@
         ctx.rotate(slice * i + slice / 2);
         ctx.textAlign = "right";
         ctx.fillStyle = "#333";
-        ctx.font = ${Math.min(16, size / total)}px 'Luckiest Guy', sans-serif;
+        ctx.font = `${Math.min(16, size / total)}px 'Luckiest Guy', sans-serif`;
         ctx.fillText(names[i], size / 2 - 20, 5);
         ctx.restore();
       }
@@ -220,7 +220,7 @@
     function spinWheel() {
       const selected = giftSelector.value;
       if (winners[selected].length >= winnersPerGift[selected]) {
-        resultEl.innerHTML = ✅ <b>${selected}</b> 抽獎已完成！;
+        resultEl.innerHTML = `✅ <b>${selected}</b> 抽獎已完成！`;
         spinBtn.disabled = false;
         return;
       }
@@ -237,12 +237,12 @@
       const angle = (3 * Math.PI / 2) - (rand * slice) + (slice / 2);
 
       canvas.style.transition = "transform 5s ease-out";
-      canvas.style.transform = rotate(${angle + 4 * 2 * Math.PI}rad);
+      canvas.style.transform = `rotate(${angle + 4 * 2 * Math.PI}rad)`;
 
       setTimeout(() => {
         const winner = names[rand];
         winners[selected].push(winner);
-        resultEl.innerHTML = 🎉 中獎者：<b>${winner}</b>（${selected}）！;
+        resultEl.innerHTML = `🎉 中獎者：<b>${winner}</b>（${selected}）！`;
         fetchNames();
         spinBtn.disabled = false;
       }, 5000);
@@ -259,7 +259,7 @@
 
     showWinnersBtn.addEventListener("click", () => {
       resultEl.innerHTML = Object.entries(winners)
-        .map(([gift, names]) => <b>${gift}</b>: ${names.join(", ") || "無"})
+        .map(([gift, names]) => `<b>${gift}</b>: ${names.join(", ") || "無"}`)
         .join("<br>");
     });
 
