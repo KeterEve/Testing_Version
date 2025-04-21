@@ -149,10 +149,23 @@
     const resultEl = document.getElementById("result");
     const giftSelector = document.getElementById("giftSelector");
 
-    let names = [];
     let winners = { Gift1: [], Gift2: [], Gift3: [] };
     let winnersPerGift = { Gift1: 1, Gift2: 1, Gift3: 3 };
-    let cachedData = null;
+    let cachedData = [
+      { name: "張三", Selectedgifts: "Gift1", multiple: 2 },
+      { name: "李四", Selectedgifts: "Gift1", multiple: 1 },
+      { name: "王五", Selectedgifts: "Gift2", multiple: 1 },
+      { name: "趙六", Selectedgifts: "Gift2", multiple: 1 },
+      { name: "陳七", Selectedgifts: "Gift3", multiple: 3 },
+      { name: "林八", Selectedgifts: "Gift3", multiple: 2 },
+      { name: "黃九", Selectedgifts: "Gift3", multiple: 1 }
+    ];
+
+    function getAvailableNames(selected) {
+      return cachedData
+        .filter(n => n.Selectedgifts === selected && !winners[selected].includes(n.name))
+        .flatMap(n => Array(n.multiple || 1).fill(n.name));
+    }
 
     function setCanvasSize() {
       const container = document.getElementById("wheel-container");
@@ -162,37 +175,9 @@
       drawWheel();
     }
 
-    async function fetchNames() {
-      resultEl.innerHTML = "⏳ 正在加載...";
-      try {
-        cachedData = [
-          { name: "張三", Selectedgifts: "Gift1", multiple: 2 },
-          { name: "李四", Selectedgifts: "Gift1", multiple: 1 },
-          { name: "王五", Selectedgifts: "Gift2", multiple: 1 },
-          { name: "趙六", Selectedgifts: "Gift2", multiple: 1 },
-          { name: "陳七", Selectedgifts: "Gift3", multiple: 3 },
-          { name: "林八", Selectedgifts: "Gift3", multiple: 2 },
-          { name: "黃九", Selectedgifts: "Gift3", multiple: 1 }
-        ];
-
-        const selected = giftSelector.value;
-        names = cachedData
-          .filter(n => n.Selectedgifts === selected && !winners[selected].includes(n.name))
-          .flatMap(n => Array(n.multiple || 1).fill(n.name));
-
-        if (names.length === 0) {
-          resultEl.innerHTML = "⚠️ 沒有可用的參與者";
-        } else {
-          resultEl.innerHTML = "";
-        }
-        drawWheel();
-      } catch (e) {
-        resultEl.innerHTML = "❌ 無法加載數據，請稍後重試";
-        console.error(e);
-      }
-    }
-
     function drawWheel() {
+      const selected = giftSelector.value;
+      const names = getAvailableNames(selected);
       const total = names.length;
       const size = canvas.width;
       ctx.clearRect(0, 0, size, size);
@@ -207,7 +192,7 @@
         ctx.lineTo(size / 2, size / 2);
         ctx.fill();
         ctx.save();
-        ctx.translate(size / 2, size / 2);
+        ctx.translate(size / 2, size / 2);大
         ctx.rotate(slice * i + slice / 2);
         ctx.textAlign = "right";
         ctx.fillStyle = "#333";
@@ -219,19 +204,21 @@
 
     function spinWheel() {
       const selected = giftSelector.value;
+      const availableNames = getAvailableNames(selected);
+
       if (winners[selected].length >= winnersPerGift[selected]) {
         resultEl.innerHTML = `✅ <b>${selected}</b> 抽獎已完成！`;
         spinBtn.disabled = false;
         return;
       }
 
-      const total = names.length;
-      if (total === 0) {
+      if (availableNames.length === 0) {
         resultEl.innerHTML = "⚠️ 沒有可用的參與者";
         spinBtn.disabled = false;
         return;
       }
 
+      const total = availableNames.length;
       const slice = 2 * Math.PI / total;
       const rand = Math.floor(Math.random() * total);
       const angle = (3 * Math.PI / 2) - (rand * slice) + (slice / 2);
@@ -240,10 +227,10 @@
       canvas.style.transform = `rotate(${angle + 4 * 2 * Math.PI}rad)`;
 
       setTimeout(() => {
-        const winner = names[rand];
+        const winner = availableNames[rand];
         winners[selected].push(winner);
         resultEl.innerHTML = `🎉 中獎者：<b>${winner}</b>（${selected}）！`;
-        fetchNames();
+        drawWheel();
         spinBtn.disabled = false;
       }, 5000);
     }
@@ -263,11 +250,10 @@
         .join("<br>");
     });
 
-    giftSelector.addEventListener("change", fetchNames);
+    giftSelector.addEventListener("change", drawWheel);
     window.addEventListener("resize", setCanvasSize);
 
     setCanvasSize();
-    fetchNames();
   </script>
 </body>
 </html>
