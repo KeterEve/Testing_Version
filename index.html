@@ -73,9 +73,9 @@
       height: 0;
       border-left: 20px solid transparent;
       border-right: 20px solid transparent;
-      border-bottom: 30px solid #fff;
+      border-top: 30px solid #fff;
       position: absolute;
-      top: -30px;
+      top: 10px;
       left: calc(50% - 20px);
       z-index: 10;
     }
@@ -152,15 +152,7 @@
     let names = [];
     let winners = { Gift1: [], Gift2: [], Gift3: [] };
     let winnersPerGift = { Gift1: 1, Gift2: 1, Gift3: 3 };
-    let cachedData = [
-      { name: "張三", Selectedgifts: "Gift1", multiple: 2 },
-      { name: "李四", Selectedgifts: "Gift1", multiple: 1 },
-      { name: "王五", Selectedgifts: "Gift2", multiple: 1 },
-      { name: "趙六", Selectedgifts: "Gift2", multiple: 1 },
-      { name: "陳七", Selectedgifts: "Gift3", multiple: 3 },
-      { name: "林八", Selectedgifts: "Gift3", multiple: 2 },
-      { name: "黃九", Selectedgifts: "Gift3", multiple: 1 }
-    ];
+    let cachedData = null;
 
     function setCanvasSize() {
       const container = document.getElementById("wheel-container");
@@ -168,6 +160,36 @@
       canvas.width = size;
       canvas.height = size;
       drawWheel();
+    }
+
+    async function fetchNames() {
+      resultEl.innerHTML = "⏳ 正在加載...";
+      try {
+        cachedData = [
+          { name: "張三", Selectedgifts: "Gift1", multiple: 2 },
+          { name: "李四", Selectedgifts: "Gift1", multiple: 1 },
+          { name: "王五", Selectedgifts: "Gift2", multiple: 1 },
+          { name: "趙六", Selectedgifts: "Gift2", multiple: 1 },
+          { name: "陳七", Selectedgifts: "Gift3", multiple: 3 },
+          { name: "林八", Selectedgifts: "Gift3", multiple: 2 },
+          { name: "黃九", Selectedgifts: "Gift3", multiple: 1 }
+        ];
+
+        const selected = giftSelector.value;
+        names = cachedData
+          .filter(n => n.Selectedgifts === selected && !winners[selected].includes(n.name))
+          .flatMap(n => Array(n.multiple || 1).fill(n.name));
+
+        if (names.length === 0) {
+          resultEl.innerHTML = "⚠️ 沒有可用的參與者";
+        } else {
+          resultEl.innerHTML = "";
+        }
+        drawWheel();
+      } catch (e) {
+        resultEl.innerHTML = "❌ 無法加載數據，請稍後重試";
+        console.error(e);
+      }
     }
 
     function drawWheel() {
@@ -189,7 +211,7 @@
         ctx.rotate(slice * i + slice / 2);
         ctx.textAlign = "right";
         ctx.fillStyle = "#333";
-        ctx.font = `${Math.min(16, size / total)}px 'Luckiest Guy', sans-serif`;
+        ctx.font = ${Math.min(16, size / total)}px 'Luckiest Guy', sans-serif;
         ctx.fillText(names[i], size / 2 - 20, 5);
         ctx.restore();
       }
@@ -197,28 +219,30 @@
 
     function spinWheel() {
       const selected = giftSelector.value;
-      const availableNames = cachedData
-        .filter(n => n.Selectedgifts === selected && !winners[selected].includes(n.name))
-        .flatMap(n => Array(n.multiple || 1).fill(n.name));
-
-      if (availableNames.length === 0) {
-        resultEl.innerHTML = `✅ <b>${selected}</b> 抽獎已完成！`;
+      if (winners[selected].length >= winnersPerGift[selected]) {
+        resultEl.innerHTML = ✅ <b>${selected}</b> 抽獎已完成！;
         spinBtn.disabled = false;
         return;
       }
 
-      const total = availableNames.length;
+      const total = names.length;
+      if (total === 0) {
+        resultEl.innerHTML = "⚠️ 沒有可用的參與者";
+        spinBtn.disabled = false;
+        return;
+      }
+
       const slice = 2 * Math.PI / total;
       const rand = Math.floor(Math.random() * total);
       const angle = (3 * Math.PI / 2) - (rand * slice) + (slice / 2);
 
       canvas.style.transition = "transform 5s ease-out";
-      canvas.style.transform = `rotate(${angle + 4 * 2 * Math.PI}rad)`;
+      canvas.style.transform = rotate(${angle + 4 * 2 * Math.PI}rad);
 
       setTimeout(() => {
-        const winner = availableNames[rand];
+        const winner = names[rand];
         winners[selected].push(winner);
-        resultEl.innerHTML = `🎉 中獎者：<b>${winner}</b>（${selected}）！`;
+        resultEl.innerHTML = 🎉 中獎者：<b>${winner}</b>（${selected}）！;
         fetchNames();
         spinBtn.disabled = false;
       }, 5000);
@@ -235,7 +259,7 @@
 
     showWinnersBtn.addEventListener("click", () => {
       resultEl.innerHTML = Object.entries(winners)
-        .map(([gift, names]) => `<b>${gift}</b>: ${names.join(", ") || "無"}`)
+        .map(([gift, names]) => <b>${gift}</b>: ${names.join(", ") || "無"})
         .join("<br>");
     });
 
