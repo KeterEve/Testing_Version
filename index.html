@@ -35,6 +35,7 @@
       position: relative;
       width: 100%;
       max-width: 400px;
+      overflow: hidden;
     }
     #wheel {
       width: 100%;
@@ -62,14 +63,15 @@
       height: 0;
       border-left: 20px solid transparent;
       border-right: 20px solid transparent;
+      border-top: none;
       border-bottom: 30px solid #fff;
       position: absolute;
-      bottom: -60px; /* 向上調高 */
+      top: 10px;
       left: calc(50% - 20px);
-      z-index: 3;
+      z-index: 10;
     }
     #spin, #show-winners {
-      margin: 25px; /* 拉開與箭頭距離 */
+      margin: 10px;
       font-size: 1.5rem;
       background: #ffb6b9;
       padding: 8px 20px;
