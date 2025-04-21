@@ -6,6 +6,10 @@
   <title>🎉 Petopia 1000 Followers 達成 - Lucky Draw 2025 🎁</title>
   <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       background: linear-gradient(to right, #a8edea, #fed6e3);
@@ -17,6 +21,7 @@
       min-height: 100vh;
       overflow: auto;
     }
+
     h1 {
       color: #fff;
       text-shadow: 2px 2px 8px #000;
@@ -24,6 +29,7 @@
       font-size: 2rem;
       text-align: center;
     }
+
     select {
       font-size: 1.2rem;
       padding: 5px;
@@ -31,12 +37,14 @@
       border-radius: 8px;
       font-family: inherit;
     }
+
     #wheel-container {
       position: relative;
       width: 100%;
       max-width: 400px;
-      overflow: hidden;
+      overflow: visible;
     }
+
     #wheel {
       width: 100%;
       height: auto;
@@ -46,6 +54,7 @@
       background: #eee;
       display: block;
     }
+
     #wheel::after {
       content: '';
       position: absolute;
@@ -58,18 +67,19 @@
       transform: translate(-50%, -50%);
       z-index: 2;
     }
+
     .pointer {
       width: 0;
       height: 0;
       border-left: 20px solid transparent;
       border-right: 20px solid transparent;
-      border-top: none;
-      border-bottom: 30px solid #fff;
+      border-top: 30px solid #fff;
       position: absolute;
-      top: 10px;
+      bottom: 10px;
       left: calc(50% - 20px);
       z-index: 10;
     }
+
     #spin, #show-winners {
       margin: 10px;
       font-size: 1.5rem;
@@ -81,10 +91,12 @@
       box-shadow: 0 0 10px #333;
       font-family: inherit;
     }
+
     #spin:disabled {
       background: #ccc;
       cursor: not-allowed;
     }
+
     #result {
       margin: 10px;
       font-size: 1.5rem;
@@ -94,6 +106,7 @@
       max-width: 90%;
       word-wrap: break-word;
     }
+
     @media (max-width: 600px) {
       h1 {
         font-size: 1.5rem;
