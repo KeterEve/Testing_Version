@@ -75,7 +75,7 @@
       border-right: 20px solid transparent;
       border-top: 30px solid #fff;
       position: absolute;
-      top: -30px;
+      bottom: 10px;
       left: calc(50% - 20px);
       z-index: 10;
     }
@@ -133,8 +133,8 @@
   </select>
 
   <div id="wheel-container">
-    <div class="pointer"></div>
     <canvas id="wheel"></canvas>
+    <div class="pointer"></div>
   </div>
 
   <button id="spin">Spin!</button>
@@ -252,4 +252,22 @@
       if (spinBtn.disabled) return;
       spinBtn.disabled = true;
       resultEl.innerHTML = "";
-      canvas.style.tra
+      canvas.style.transition = "none";
+      canvas.style.transform = "rotate(0deg)";
+      setTimeout(spinWheel, 100);
+    });
+
+    showWinnersBtn.addEventListener("click", () => {
+      resultEl.innerHTML = Object.entries(winners)
+        .map(([gift, names]) => `<b>${gift}</b>: ${names.join(", ") || "無"}`)
+        .join("<br>");
+    });
+
+    giftSelector.addEventListener("change", fetchNames);
+    window.addEventListener("resize", setCanvasSize);
+
+    setCanvasSize();
+    fetchNames();
+  </script>
+</body>
+</html>
