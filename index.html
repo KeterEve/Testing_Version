@@ -6,9 +6,6 @@
   <title>🎉 Petopia 1000 Followers 達成 - Lucky Draw 2025 🎁</title>
   <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-    }
     body {
       margin: 0;
       background: linear-gradient(to right, #a8edea, #fed6e3);
@@ -23,7 +20,6 @@
     h1 {
       color: #fff;
       text-shadow: 2px 2px 8px #000;
-      margin: 0.5em 0;
       font-size: 2rem;
       text-align: center;
     }
@@ -32,35 +28,18 @@
       padding: 5px;
       margin: 10px;
       border-radius: 8px;
-      font-family: inherit;
     }
     #wheel-container {
       position: relative;
-      width: 100%;
       max-width: 400px;
-      min-width: 250px;
-      overflow: visible;
+      width: 100%;
     }
     #wheel {
       width: 100%;
-      height: auto;
       border-radius: 50%;
       border: 10px solid #fff;
       box-shadow: 0 0 30px #ffb6b9;
       background: #eee;
-      display: block;
-    }
-    #wheel::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 20px;
-      height: 20px;
-      background: #fff;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 2;
     }
     .pointer {
       width: 0;
@@ -77,18 +56,11 @@
       margin: 10px;
       font-size: 1.5rem;
       background: #ffb6b9;
-      padding: 8px 20px;
+      padding: 10px 30px;
       border-radius: 12px;
       border: none;
       cursor: pointer;
       box-shadow: 0 0 10px #333;
-      font-family: inherit;
-      touch-action: manipulation;
-      min-width: 120px;
-    }
-    #spin:disabled {
-      background: #ccc;
-      cursor: not-allowed;
     }
     #result {
       margin: 10px;
@@ -97,19 +69,6 @@
       text-shadow: 2px 2px 5px #000;
       text-align: center;
       max-width: 90%;
-      word-wrap: break-word;
-    }
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 1.5rem;
-      }
-      select, #spin, #show-winners {
-        font-size: 1rem;
-        padding: 6px 15px;
-      }
-      #result {
-        font-size: 1.2rem;
-      }
     }
   </style>
 </head>
@@ -138,61 +97,49 @@
     const resultEl = document.getElementById("result");
     const giftSelector = document.getElementById("giftSelector");
 
-    if (!ctx) {
-      resultEl.innerHTML = "❌ 您的瀏覽器不支援 Canvas，請升級使用";
-    }
-
-    let cachedData = null;
+    let cachedData = [];
+    let activePool = [];
     let displayNames = [];
-    let activeNames = [];
     let winners = { Gift1: [], Gift2: [], Gift3: [] };
     let winnersPerGift = { Gift1: 1, Gift2: 1, Gift3: 3 };
 
     function setCanvasSize() {
-      const container = document.getElementById("wheel-container");
-      const size = Math.min(container.offsetWidth || 300, 400);
+      const size = Math.min(canvas.parentElement.offsetWidth, 400);
       canvas.width = size;
       canvas.height = size;
       drawWheel();
     }
 
-    async function fetchNames() {
+    function fetchNames() {
       resultEl.innerHTML = "⏳ 正在加載...";
-      try {
-        cachedData = [
-          { name: "張三", Selectedgifts: "Gift1", multiple: 2 },
-          { name: "李四", Selectedgifts: "Gift1", multiple: 1 },
-          { name: "王五", Selectedgifts: "Gift2", multiple: 1 },
-          { name: "趙六", Selectedgifts: "Gift2", multiple: 1 },
-          { name: "陳七", Selectedgifts: "Gift3", multiple: 3 },
-          { name: "林八", Selectedgifts: "Gift3", multiple: 2 },
-          { name: "黃九", Selectedgifts: "Gift3", multiple: 1 }
-        ];
+      cachedData = [
+        { name: "張三", Selectedgifts: "Gift1", multiple: 2 },
+        { name: "李四", Selectedgifts: "Gift1", multiple: 1 },
+        { name: "王五", Selectedgifts: "Gift2", multiple: 1 },
+        { name: "趙六", Selectedgifts: "Gift2", multiple: 1 },
+        { name: "陳七", Selectedgifts: "Gift3", multiple: 3 },
+        { name: "林八", Selectedgifts: "Gift3", multiple: 2 },
+        { name: "黃九", Selectedgifts: "Gift3", multiple: 1 }
+      ];
 
-        const selected = giftSelector.value;
-        activeNames = cachedData
-          .filter(n => n.Selectedgifts === selected && !winners[selected].includes(n.name))
-          .flatMap(n => Array(n.multiple || 1).fill(n.name));
-        displayNames = [...activeNames];
+      const selected = giftSelector.value;
+      const filtered = cachedData.filter(n => n.Selectedgifts === selected && !winners[selected].includes(n.name));
+      activePool = filtered.flatMap(n => Array(n.multiple).fill(n.name));
+      displayNames = filtered.map(n => n.name);
 
-        resultEl.innerHTML = displayNames.length === 0 ? "⚠️ 沒有可用的參與者" : "";
-        drawWheel();
-      } catch (e) {
-        resultEl.innerHTML = "❌ 無法加載資料，請稍後重試";
+      if (displayNames.length === 0) {
+        resultEl.innerHTML = "⚠️ 沒有可用的參與者";
+      } else {
+        resultEl.innerHTML = "";
       }
+      drawWheel();
     }
 
     function drawWheel() {
-      const total = displayNames.length;
       const size = canvas.width;
+      const total = displayNames.length;
       ctx.clearRect(0, 0, size, size);
-      if (total === 0) {
-        ctx.fillStyle = "#333";
-        ctx.font = "16px 'Luckiest Guy', sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("無參與者", size / 2, size / 2);
-        return;
-      }
+      if (total === 0) return;
 
       const slice = 2 * Math.PI / total;
       for (let i = 0; i < total; i++) {
@@ -206,9 +153,9 @@
         ctx.save();
         ctx.translate(size / 2, size / 2);
         ctx.rotate(slice * i + slice / 2);
-        ctx.textAlign = "center";
         ctx.fillStyle = "#333";
-        ctx.font = `${Math.max(12, Math.min(16, size / total))}px 'Luckiest Guy', sans-serif`;
+        ctx.textAlign = "center";
+        ctx.font = `${Math.max(14, size / 18)}px 'Luckiest Guy', sans-serif`;
         ctx.fillText(displayNames[i], 0, -size / 2 + 30);
         ctx.restore();
       }
@@ -218,43 +165,37 @@
       const selected = giftSelector.value;
       if (winners[selected].length >= winnersPerGift[selected]) {
         resultEl.innerHTML = `✅ <b>${selected}</b> 抽獎已完成！`;
-        spinBtn.disabled = false;
-        showWinnersBtn.disabled = false;
         return;
       }
 
-      const total = activeNames.length;
-      if (total === 0) {
+      if (activePool.length === 0) {
         resultEl.innerHTML = "⚠️ 沒有可用的參與者";
-        spinBtn.disabled = false;
-        showWinnersBtn.disabled = false;
         return;
       }
 
-      const slice = 2 * Math.PI / total;
-      const rand = Math.floor(Math.random() * total);
-      const angle = (3 * Math.PI / 2) - (rand * slice) + (slice / 2);
-      const winner = activeNames[rand];
+      const rand = Math.floor(Math.random() * activePool.length);
+      const winner = activePool[rand];
 
-      canvas.style.transition = "transform 3s ease-out";
-      canvas.style.transform = `rotate(${angle + 4 * 2 * Math.PI}rad)`;
+      const indexInDisplay = displayNames.indexOf(winner);
+      const total = displayNames.length;
+      const slice = 2 * Math.PI / total;
+      const angle = (3 * Math.PI / 2) - (indexInDisplay * slice) - (slice / 2);
+
+      canvas.style.transition = "transform 4s ease-out";
+      canvas.style.transform = `rotate(${angle + 4 * Math.PI}rad)`;
 
       setTimeout(() => {
         winners[selected].push(winner);
-        resultEl.innerHTML = `🎉 中獎者：<b>${winner}</b>（${selected}）！`;
-        activeNames = activeNames.filter(n => n !== winner);
+        activePool = activePool.filter(n => n !== winner);
         displayNames = displayNames.filter(n => n !== winner);
+        resultEl.innerHTML = `🎉 中獎者：<b>${winner}</b>（${selected}）！`;
         drawWheel();
         spinBtn.disabled = false;
-        showWinnersBtn.disabled = false;
-      }, 3000);
+      }, 4000);
     }
 
     spinBtn.addEventListener("click", () => {
-      if (spinBtn.disabled) return;
       spinBtn.disabled = true;
-      showWinnersBtn.disabled = true;
-      resultEl.innerHTML = "";
       canvas.style.transition = "none";
       canvas.style.transform = "rotate(0deg)";
       setTimeout(spinWheel, 100);
@@ -262,7 +203,7 @@
 
     showWinnersBtn.addEventListener("click", () => {
       resultEl.innerHTML = Object.entries(winners)
-        .map(([gift, names]) => `<b>${gift}</b>: ${names.join(", ") || "無"}`)
+        .map(([gift, list]) => `<b>${gift}</b>: ${list.join(", ") || "無"}`)
         .join("<br>");
     });
 
