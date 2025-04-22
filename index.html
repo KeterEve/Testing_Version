@@ -38,6 +38,7 @@
       position: relative;
       width: 100%;
       max-width: 400px;
+      min-width: 250px;
       overflow: visible;
     }
     #wheel {
@@ -82,6 +83,8 @@
       cursor: pointer;
       box-shadow: 0 0 10px #333;
       font-family: inherit;
+      touch-action: manipulation;
+      min-width: 120px;
     }
     #spin:disabled {
       background: #ccc;
@@ -107,9 +110,6 @@
       #result {
         font-size: 1.2rem;
       }
-      #wheel-container {
-        max-width: 80vw;
-      }
     }
   </style>
 </head>
@@ -120,10 +120,12 @@
     <option value="Gift2">🎁 Gift2</option>
     <option value="Gift3">🎁 Gift3</option>
   </select>
+
   <div id="wheel-container">
     <canvas id="wheel"></canvas>
     <div class="pointer"></div>
   </div>
+
   <button id="spin">Spin!</button>
   <button id="show-winners">查看中獎者</button>
   <div id="result"></div>
@@ -136,6 +138,10 @@
     const resultEl = document.getElementById("result");
     const giftSelector = document.getElementById("giftSelector");
 
+    if (!ctx) {
+      resultEl.innerHTML = "❌ 您的瀏覽器不支援 Canvas，請升級使用";
+    }
+
     let cachedData = null;
     let displayNames = [];
     let activeNames = [];
@@ -144,7 +150,7 @@
 
     function setCanvasSize() {
       const container = document.getElementById("wheel-container");
-      const size = Math.min(container.offsetWidth, 400);
+      const size = Math.min(container.offsetWidth || 300, 400);
       canvas.width = size;
       canvas.height = size;
       drawWheel();
@@ -162,11 +168,13 @@
           { name: "林八", Selectedgifts: "Gift3", multiple: 2 },
           { name: "黃九", Selectedgifts: "Gift3", multiple: 1 }
         ];
+
         const selected = giftSelector.value;
         activeNames = cachedData
           .filter(n => n.Selectedgifts === selected && !winners[selected].includes(n.name))
           .flatMap(n => Array(n.multiple || 1).fill(n.name));
         displayNames = [...activeNames];
+
         resultEl.innerHTML = displayNames.length === 0 ? "⚠️ 沒有可用的參與者" : "";
         drawWheel();
       } catch (e) {
@@ -178,7 +186,13 @@
       const total = displayNames.length;
       const size = canvas.width;
       ctx.clearRect(0, 0, size, size);
-      if (total === 0) return;
+      if (total === 0) {
+        ctx.fillStyle = "#333";
+        ctx.font = "16px 'Luckiest Guy', sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("無參與者", size / 2, size / 2);
+        return;
+      }
 
       const slice = 2 * Math.PI / total;
       for (let i = 0; i < total; i++) {
@@ -194,7 +208,7 @@
         ctx.rotate(slice * i + slice / 2);
         ctx.textAlign = "center";
         ctx.fillStyle = "#333";
-        ctx.font = `${Math.max(10, Math.min(16, size / total))}px 'Luckiest Guy', sans-serif`;
+        ctx.font = `${Math.max(12, Math.min(16, size / total))}px 'Luckiest Guy', sans-serif`;
         ctx.fillText(displayNames[i], 0, -size / 2 + 30);
         ctx.restore();
       }
@@ -205,6 +219,7 @@
       if (winners[selected].length >= winnersPerGift[selected]) {
         resultEl.innerHTML = `✅ <b>${selected}</b> 抽獎已完成！`;
         spinBtn.disabled = false;
+        showWinnersBtn.disabled = false;
         return;
       }
 
@@ -212,6 +227,7 @@
       if (total === 0) {
         resultEl.innerHTML = "⚠️ 沒有可用的參與者";
         spinBtn.disabled = false;
+        showWinnersBtn.disabled = false;
         return;
       }
 
@@ -220,22 +236,24 @@
       const angle = (3 * Math.PI / 2) - (rand * slice) + (slice / 2);
       const winner = activeNames[rand];
 
-      canvas.style.transition = "transform 5s ease-out";
+      canvas.style.transition = "transform 3s ease-out";
       canvas.style.transform = `rotate(${angle + 4 * 2 * Math.PI}rad)`;
 
       setTimeout(() => {
         winners[selected].push(winner);
         resultEl.innerHTML = `🎉 中獎者：<b>${winner}</b>（${selected}）！`;
         activeNames = activeNames.filter(n => n !== winner);
-        displayNames = [...activeNames];
+        displayNames = displayNames.filter(n => n !== winner);
         drawWheel();
         spinBtn.disabled = false;
-      }, 5000);
+        showWinnersBtn.disabled = false;
+      }, 3000);
     }
 
     spinBtn.addEventListener("click", () => {
       if (spinBtn.disabled) return;
       spinBtn.disabled = true;
+      showWinnersBtn.disabled = true;
       resultEl.innerHTML = "";
       canvas.style.transition = "none";
       canvas.style.transform = "rotate(0deg)";
