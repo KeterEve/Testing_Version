@@ -240,13 +240,19 @@
       canvas.style.transform = `rotate(${angle + 4 * 2 * Math.PI}rad)`;
 
       setTimeout(() => {
-        winners[selected].push(winner);
-        resultEl.innerHTML = `🎉 中獎者：<b>${winner}</b>（${selected}）！`;
-        activeNames = activeNames.filter(n => n !== winner);
-        displayNames = displayNames.filter(n => n !== winner);
-        drawWheel();
-        spinBtn.disabled = false;
-        showWinnersBtn.disabled = false;
+        setTimeout(() => {
+          winners[selected].push(winner);
+          resultEl.innerHTML = `🎉 中獎者：<b>${winner}</b>（${selected}）！`;
+          
+          const index = activeNames.indexOf(winner);
+          if (index !== -1) activeNames.splice(index, 1);
+          
+          const displayIndex = displayNames.indexOf(winner);
+          if (displayIndex !== -1) displayNames.splice(displayIndex, 1);
+          
+          drawWheel();
+          spinBtn.disabled = false;
+          showWinnersBtn.disabled = false;
       }, 3000);
     }
 
