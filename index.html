@@ -1,4 +1,43 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
@@ -23,23 +62,15 @@
     h1 {
       color: #fff;
       text-shadow: 2px 2px 8px #000;
-      margin: 0.5em 0;
       font-size: 2rem;
       text-align: center;
-    }
-    select {
-      font-size: 1.2rem;
-      padding: 5px;
-      margin: 10px;
-      border-radius: 8px;
-      font-family: inherit;
+      margin: 1rem;
     }
     #wheel-container {
       position: relative;
       width: 100%;
       max-width: 400px;
       min-width: 250px;
-      overflow: visible;
     }
     #wheel {
       width: 100%;
@@ -47,20 +78,7 @@
       border-radius: 50%;
       border: 10px solid #fff;
       box-shadow: 0 0 30px #ffb6b9;
-      background: #eee;
       display: block;
-    }
-    #wheel::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 20px;
-      height: 20px;
-      background: #fff;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 2;
     }
     .pointer {
       width: 0;
@@ -73,29 +91,31 @@
       left: calc(50% - 20px);
       z-index: 10;
     }
-    #spin, #show-winners {
+    select, button {
+      font-size: 1.2rem;
+      padding: 10px 20px;
       margin: 10px;
-      font-size: 1.5rem;
-      background: #ffb6b9;
-      padding: 8px 20px;
-      border-radius: 12px;
+      border-radius: 10px;
       border: none;
-      cursor: pointer;
-      box-shadow: 0 0 10px #333;
       font-family: inherit;
       touch-action: manipulation;
+    }
+    #spin, #show-winners, #reset {
+      background: #ffb6b9;
+      box-shadow: 0 0 10px #333;
+      cursor: pointer;
       min-width: 120px;
     }
-    #spin:disabled {
+    #spin:disabled, #show-winners:disabled, #reset:disabled {
       background: #ccc;
       cursor: not-allowed;
     }
     #result {
-      margin: 10px;
-      font-size: 1.5rem;
+      font-size: 1.3rem;
+      text-align: center;
       color: #fff;
       text-shadow: 2px 2px 5px #000;
-      text-align: center;
+      margin-top: 10px;
       max-width: 90%;
       word-wrap: break-word;
     }
@@ -103,12 +123,15 @@
       h1 {
         font-size: 1.5rem;
       }
-      select, #spin, #show-winners {
+      select, button {
         font-size: 1rem;
-        padding: 6px 15px;
+        padding: 8px 15px;
       }
       #result {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
+      }
+      #wheel-container {
+        max-width: 80vw;
       }
     }
   </style>
@@ -120,157 +143,244 @@
     <option value="Gift2">🎁 Gift2</option>
     <option value="Gift3">🎁 Gift3</option>
   </select>
-
   <div id="wheel-container">
     <canvas id="wheel"></canvas>
     <div class="pointer"></div>
   </div>
-
   <button id="spin">Spin!</button>
   <button id="show-winners">查看中獎者</button>
+  <button id="reset">重置抽獎</button>
   <div id="result"></div>
 
   <script>
     const canvas = document.getElementById("wheel");
-    const ctx = canvas.getContext("2d");
+    let ctx = null;
     const spinBtn = document.getElementById("spin");
     const showWinnersBtn = document.getElementById("show-winners");
+    const resetBtn = document.getElementById("reset");
     const resultEl = document.getElementById("result");
     const giftSelector = document.getElementById("giftSelector");
 
-    if (!ctx) {
-      resultEl.innerHTML = "❌ 您的瀏覽器不支援 Canvas，請升級使用";
-    }
-
-    let cachedData = null;
-    let displayNames = [];
-    let activeNames = [];
+    let cachedData = [];
+    let drawParticipants = [];
+    let spinPool = [];
     let winners = { Gift1: [], Gift2: [], Gift3: [] };
-    let winnersPerGift = { Gift1: 1, Gift2: 1, Gift3: 3 };
+    const winnersPerGift = { Gift1: 1, Gift2: 1, Gift3: 3 };
+
+    function init() {
+      ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resultEl.innerHTML = "❌ 您的瀏覽器不支持 Canvas，請升級瀏覽器";
+        return false;
+      }
+      return true;
+    }
 
     function setCanvasSize() {
       const container = document.getElementById("wheel-container");
       const size = Math.min(container.offsetWidth || 300, 400);
       canvas.width = size;
       canvas.height = size;
+      console.log("Canvas size set to:", size);
       drawWheel();
     }
 
     async function fetchNames() {
-      resultEl.innerHTML = "⏳ 正在加載...";
+      resultEl.innerHTML = "⏳ 載入中...";
       try {
-        cachedData = [
-          { name: "張三", Selectedgifts: "Gift1", multiple: 2 },
-          { name: "李四", Selectedgifts: "Gift1", multiple: 1 },
-          { name: "王五", Selectedgifts: "Gift2", multiple: 1 },
-          { name: "趙六", Selectedgifts: "Gift2", multiple: 1 },
-          { name: "陳七", Selectedgifts: "Gift3", multiple: 3 },
-          { name: "林八", Selectedgifts: "Gift3", multiple: 2 },
-          { name: "黃九", Selectedgifts: "Gift3", multiple: 1 }
-        ];
+        const webAppUrl = "https://script.google.com/macros/s/AKfycbwUAkhb8vDKfjMFAjfzYWNj_R_lINxrP1WimI5Y6V38MaSc6FWaqIBbRBmGhX55c-5D7w/exec";
+        const response = await fetch(webAppUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+
+        cachedData = data.map(item => ({
+          name: item.name,
+          Selectedgifts: item.Selectedgifts,
+          multiple: parseInt(item.multiple || 1)
+        }));
 
         const selected = giftSelector.value;
-        activeNames = cachedData
-          .filter(n => n.Selectedgifts === selected && !winners[selected].includes(n.name))
-          .flatMap(n => Array(n.multiple || 1).fill(n.name));
-        displayNames = [...activeNames];
+        console.log("Selected gift:", selected);
+        console.log("Winners for this gift:", winners[selected]);
 
-        resultEl.innerHTML = displayNames.length === 0 ? "⚠️ 沒有可用的參與者" : "";
+        if (winners[selected].length >= winnersPerGift[selected]) {
+          drawParticipants = [];
+          spinPool = [];
+          drawWheel();
+          resultEl.innerHTML = `✅ <b>${selected}</b> 抽獎已完成！`;
+          return;
+        }
+
+        const filtered = cachedData.filter(n => n.Selectedgifts === selected && !winners[selected].includes(n.name));
+        console.log("Filtered participants:", filtered);
+
+        drawParticipants = filtered.map(n => ({ name: n.name, multiple: n.multiple || 1 }));
+        spinPool = filtered.flatMap(n => Array(n.multiple || 1).fill(n.name));
+        console.log("drawParticipants after update:", drawParticipants);
+        console.log("spinPool after update:", spinPool);
+
         drawWheel();
+        resultEl.innerHTML = drawParticipants.length ? "" : "⚠️ 無參與者";
       } catch (e) {
-        resultEl.innerHTML = "❌ 無法加載資料，請稍後重試";
+        console.error("Error fetching data from Apps Script Web App:", e);
+        resultEl.innerHTML = "❌ 載入資料失敗，請稍後重試";
       }
     }
 
     function drawWheel() {
-      const total = displayNames.length;
+      if (!ctx) return;
+
       const size = canvas.width;
       ctx.clearRect(0, 0, size, size);
-      if (total === 0) {
+
+      if (!drawParticipants.length) {
         ctx.fillStyle = "#333";
         ctx.font = "16px 'Luckiest Guy', sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("無參與者", size / 2, size / 2);
+        console.log("No participants, displaying '無參與者' on canvas");
         return;
       }
 
-      const slice = 2 * Math.PI / total;
-      for (let i = 0; i < total; i++) {
+      const totalWeight = drawParticipants.reduce((sum, p) => sum + p.multiple, 0);
+      const anglePerWeight = 2 * Math.PI / totalWeight;
+      const colorMap = [
+        "#f9f871", "#ffb6b9", "#c1fba4", "#a0e7e5",
+        "#b39ddb", "#ffcc80", "#ef9a9a", "#ce93d8"
+      ];
+
+      let currentAngle = 0;
+      for (let i = 0; i < drawParticipants.length; i++) {
+        const participant = drawParticipants[i];
+        const sliceAngle = participant.multiple * anglePerWeight;
         ctx.beginPath();
-        ctx.fillStyle = i % 3 === 0 ? "#f9f871" : i % 3 === 1 ? "#ffb6b9" : "#c1fba4";
+        ctx.fillStyle = colorMap[i % colorMap.length];
         ctx.moveTo(size / 2, size / 2);
-        ctx.arc(size / 2, size / 2, size / 2, slice * i, slice * (i + 1));
+        ctx.arc(size / 2, size / 2, size / 2, currentAngle, currentAngle + sliceAngle);
         ctx.lineTo(size / 2, size / 2);
         ctx.fill();
+        console.log(`Drawing segment ${i}: color=${colorMap[i % colorMap.length]}, angle=${sliceAngle}`);
 
+        const textAngle = currentAngle + sliceAngle / 2;
         ctx.save();
         ctx.translate(size / 2, size / 2);
-        ctx.rotate(slice * i + slice / 2);
+        ctx.rotate(textAngle);
+
+        const radius = size / 2 - 40;
+        const x = radius * Math.cos(0);
+        const y = radius * Math.sin(0);
+
         ctx.textAlign = "center";
         ctx.fillStyle = "#333";
-        ctx.font = `${Math.max(12, Math.min(16, size / total))}px 'Luckiest Guy', sans-serif`;
-        ctx.fillText(displayNames[i], 0, -size / 2 + 30);
+        const fontSize = Math.max(12, Math.min(14, size / drawParticipants.length));
+        ctx.font = `${fontSize}px 'Luckiest Guy', sans-serif`;
+        ctx.fillText(participant.name, x, y);
+        if (participant.multiple > 1) {
+          ctx.font = `${fontSize - 2}px 'Luckiest Guy', sans-serif`;
+          ctx.fillText(`x${participant.multiple}`, x, y + 15);
+        }
         ctx.restore();
+        console.log(`Drawing name ${i}: ${participant.name}, multiple: x${participant.multiple}`);
+
+        currentAngle += sliceAngle;
       }
     }
 
     function spinWheel() {
-      const selected = giftSelector.value;
-      if (winners[selected].length >= winnersPerGift[selected]) {
-        resultEl.innerHTML = `✅ <b>${selected}</b> 抽獎已完成！`;
-        spinBtn.disabled = false;
-        showWinnersBtn.disabled = false;
-        return;
-      }
-
-      const total = activeNames.length;
-      if (total === 0) {
-        resultEl.innerHTML = "⚠️ 沒有可用的參與者";
-        spinBtn.disabled = false;
-        showWinnersBtn.disabled = false;
-        return;
-      }
-
-      const slice = 2 * Math.PI / total;
-      const rand = Math.floor(Math.random() * total);
-      const angle = (3 * Math.PI / 2) - (rand * slice) + (slice / 2);
-      const winner = activeNames[rand];
-
-      canvas.style.transition = "transform 3s ease-out";
-      canvas.style.transform = `rotate(${angle + 4 * 2 * Math.PI}rad)`;
-
-      setTimeout(() => {
-        winners[selected].push(winner);
-        resultEl.innerHTML = `🎉 中獎者：<b>${winner}</b>（${selected}）！`;
-        activeNames = activeNames.filter(n => n !== winner);
-        displayNames = displayNames.filter(n => n !== winner);
+      const gift = giftSelector.value;
+      if (winners[gift].length >= winnersPerGift[gift]) {
+        resultEl.innerHTML = `✅ <b>${gift}</b> 抽獎已完成！`;
+        drawParticipants = [];
+        spinPool = [];
         drawWheel();
         spinBtn.disabled = false;
         showWinnersBtn.disabled = false;
+        resetBtn.disabled = false;
+        return;
+      }
+
+      if (!spinPool.length) {
+        resultEl.innerHTML = "⚠️ 沒有可用的參與者";
+        spinBtn.disabled = false;
+        showWinnersBtn.disabled = false;
+        resetBtn.disabled = false;
+        return;
+      }
+
+      const winnerIndex = Math.floor(Math.random() * spinPool.length);
+      const winner = spinPool[winnerIndex];
+      const winnerParticipantIndex = drawParticipants.findIndex(p => p.name === winner);
+
+      const totalWeight = drawParticipants.reduce((sum, p) => sum + p.multiple, 0);
+      const anglePerWeight = 2 * Math.PI / totalWeight;
+      let targetAngle = 0;
+      for (let i = 0; i < winnerParticipantIndex; i++) {
+        targetAngle += drawParticipants[i].multiple * anglePerWeight;
+      }
+      targetAngle += (drawParticipants[winnerParticipantIndex].multiple * anglePerWeight) / 2;
+      const finalAngle = (3 * Math.PI / 2) - targetAngle;
+
+      canvas.style.transition = "transform 3s ease-out";
+      canvas.style.transform = `rotate(${finalAngle + 4 * 2 * Math.PI}rad)`;
+
+      spinBtn.disabled = true;
+      showWinnersBtn.disabled = true;
+      resetBtn.disabled = true;
+      setTimeout(() => {
+        if (!winners[gift].includes(winner)) {
+          winners[gift].push(winner);
+        }
+        console.log("Updated winners:", winners);
+        resultEl.innerHTML = `🎉 中獎者：<b>${winner}</b>（${gift}）！`;
+
+        fetchNames();
+        spinBtn.disabled = false;
+        showWinnersBtn.disabled = false;
+        resetBtn.disabled = false;
       }, 3000);
     }
 
-    spinBtn.addEventListener("click", () => {
+    function debounce(fn, wait) {
+      let timeout;
+      return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fn(...args), wait);
+      };
+    }
+
+    spinBtn.onclick = debounce(() => {
       if (spinBtn.disabled) return;
-      spinBtn.disabled = true;
-      showWinnersBtn.disabled = true;
-      resultEl.innerHTML = "";
       canvas.style.transition = "none";
       canvas.style.transform = "rotate(0deg)";
       setTimeout(spinWheel, 100);
-    });
+    }, 300);
 
-    showWinnersBtn.addEventListener("click", () => {
+    showWinnersBtn.onclick = () => {
       resultEl.innerHTML = Object.entries(winners)
-        .map(([gift, names]) => `<b>${gift}</b>: ${names.join(", ") || "無"}`)
+        .map(([gift, list]) => `<b>${gift}</b>：${list.join(", ") || "無"}`)
         .join("<br>");
-    });
+    };
 
-    giftSelector.addEventListener("change", fetchNames);
+    resetBtn.onclick = () => {
+      winners = { Gift1: [], Gift2: [], Gift3: [] };
+      resultEl.innerHTML = "✅ 抽獎已重置！";
+      fetchNames();
+    };
+
+    giftSelector.onchange = () => {
+      console.log("Gift selector changed to:", giftSelector.value);
+      fetchNames();
+    };
+
     window.addEventListener("resize", setCanvasSize);
     window.addEventListener("DOMContentLoaded", () => {
-      setCanvasSize();
-      fetchNames();
+      console.log("DOM loaded, initializing...");
+      if (init()) {
+        setCanvasSize();
+        fetchNames();
+      }
     });
   </script>
 </body>
