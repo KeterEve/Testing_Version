@@ -125,12 +125,12 @@
 <body>
   <h1>🎉 PETOPIA 1000 FOLLOWERS 達成 - LUCKY DRAW 2025 🎁</h1>
   <div class="limits-container">
-    <label>Gift1 中獎人數：<input type="number" id="gift1Limit" value="2" min="1"></label>
+    <label>Round1_Strawberry 中獎人數：<input type="number" id="Round1_StrawberryLimit" value="2" min="1"></label>
     <label>Gift2 中獎人數：<input type="number" id="gift2Limit" value="3" min="1"></label>
     <label>Gift3 中獎人數：<input type="number" id="gift3Limit" value="5" min="1"></label>
   </div>
   <select id="giftSelector">
-    <option value="Gift1">🎁 Gift1</option>
+    <option value="Round1_Strawberry">🎁 Round1_Strawberry</option>
     <option value="Gift2">🎁 Gift2</option>
     <option value="Gift3">🎁 Gift3</option>
   </select>
@@ -155,9 +155,9 @@
     let cachedData = [];
     let drawParticipants = [];
     let spinPool = [];
-    let winners = { Gift1: [], Gift2: [], Gift3: [] };
+    let winners = { Round1_Strawberry: [], Gift2: [], Gift3: [] };
     let winnersPerGift = {
-      Gift1: parseInt(document.getElementById("gift1Limit").value) || 1,
+      Round1_Strawberry: parseInt(document.getElementById("Round1_StrawberryLimit").value) || 1,
       Gift2: parseInt(document.getElementById("gift2Limit").value) || 1,
       Gift3: parseInt(document.getElementById("gift3Limit").value) || 1
     };
@@ -181,7 +181,7 @@
     }
 
     function updateWinnersPerGift() {
-      winnersPerGift.Gift1 = parseInt(document.getElementById("gift1Limit").value) || 1;
+      winnersPerGift.Round1_Strawberry = parseInt(document.getElementById("Round1_StrawberryLimit").value) || 1;
       winnersPerGift.Gift2 = parseInt(document.getElementById("gift2Limit").value) || 1;
       winnersPerGift.Gift3 = parseInt(document.getElementById("gift3Limit").value) || 1;
       console.log("Updated winnersPerGift:", winnersPerGift);
@@ -191,7 +191,7 @@
     async function fetchNames() {
       resultEl.innerHTML = "⏳ 載入中...";
       try {
-        const webAppUrl = "https://script.google.com/macros/s/AKfycbwUAkhb8vDKfjMFAjfzYWNj_R_lINxrP1WimI5Y6V38MaSc6FWaqIBbRBmGhX55c-5D7w/exec";
+        const webAppUrl = "https://script.google.com/macros/s/AKfycbw6JtHllSRqbV1coheU9mXdk7LELEczzxTIjJeH1sNa6fhwxRq86Mc6GOMsTsja1ttiSQ/exec";
         const response = await fetch(webAppUrl);
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -346,7 +346,7 @@
     };
 
     resetBtn.onclick = () => {
-      winners = { Gift1: [], Gift2: [], Gift3: [] };
+      winners = { Round1_Strawberry: [], Gift2: [], Gift3: [] };
       resultEl.innerHTML = "✅ 抽獎已重置！";
       fetchNames();
     };
@@ -356,7 +356,7 @@
       fetchNames();
     };
 
-    document.getElementById("gift1Limit").addEventListener("change", updateWinnersPerGift);
+    document.getElementById("Round1_StrawberryLimit").addEventListener("change", updateWinnersPerGift);
     document.getElementById("gift2Limit").addEventListener("change", updateWinnersPerGift);
     document.getElementById("gift3Limit").addEventListener("change", updateWinnersPerGift);
 
