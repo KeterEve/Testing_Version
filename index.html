@@ -140,7 +140,7 @@
   <h1>🎉 PETOPIA 1000 FOLLOWERS 達成 - LUCKY DRAW 2025 🎁</h1>
   <select id="giftSelector">
     <option value="Round1_Strawberry">🎁 Round1_Strawberry</option>
-    <option value="Gift2">🎁 Gift2</option>
+    <option value="Round2_Forever Plushie">🎁 Round2_Forever Plushie</option>
     <option value="Gift3">🎁 Gift3</option>
   </select>
   <div id="wheel-container">
@@ -164,8 +164,8 @@
     let cachedData = [];
     let drawParticipants = [];
     let spinPool = [];
-    let winners = { Round1_Strawberry: [], Gift2: [], Gift3: [] };
-    const winnersPerGift = { Round1_Strawberry: 1, Gift2: 1, Gift3: 3 };
+    let winners = { Round1_Strawberry: [], Round2_Forever Plushie: [], Gift3: [] };
+    const winnersPerGift = { Round1_Strawberry: 1, Round2_Forever Plushie: 1, Gift3: 3 };
 
     function init() {
       ctx = canvas.getContext("2d");
@@ -364,7 +364,7 @@
     };
 
     resetBtn.onclick = () => {
-      winners = { Round1_Strawberry: [], Gift2: [], Gift3: [] };
+      winners = { Round1_Strawberry: [], Round2_Forever Plushie: [], Gift3: [] };
       resultEl.innerHTML = "✅ 抽獎已重置！";
       fetchNames();
     };
