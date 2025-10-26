@@ -127,12 +127,12 @@
   <div class="limits-container">
     <label>Round1_Strawberry 中獎人數：<input type="number" id="Round1_StrawberryLimit" value="2" min="1"></label>
     <label>Round2_Forever_Plushie 中獎人數：<input type="number" id="Round2_Forever_PlushieLimit" value="3" min="1"></label>
-    <label>Gift3 中獎人數：<input type="number" id="gift3Limit" value="5" min="1"></label>
+    <label>Round3_TailorMade 中獎人數：<input type="number" id="Round3_TailorMadeLimit" value="5" min="1"></label>
   </div>
   <select id="giftSelector">
     <option value="Round1_Strawberry">🎁 Round1_Strawberry</option>
     <option value="Round2_Forever_Plushie">🎁 Round2_Forever_Plushie</option>
-    <option value="Gift3">🎁 Gift3</option>
+    <option value="Round3_TailorMade">🎁 Round3_TailorMade</option>
   </select>
   <div id="wheel-container">
     <canvas id="wheel"></canvas>
@@ -155,11 +155,11 @@
     let cachedData = [];
     let drawParticipants = [];
     let spinPool = [];
-    let winners = { Round1_Strawberry: [], Round2_Forever_Plushie: [], Gift3: [] };
+    let winners = { Round1_Strawberry: [], Round2_Forever_Plushie: [], Round3_TailorMade: [] };
     let winnersPerGift = {
       Round1_Strawberry: parseInt(document.getElementById("Round1_StrawberryLimit").value) || 1,
       Round2_Forever_Plushie: parseInt(document.getElementById("Round2_Forever_PlushieLimit").value) || 1,
-      Gift3: parseInt(document.getElementById("gift3Limit").value) || 1
+      Round3_TailorMade: parseInt(document.getElementById("Round3_TailorMadeLimit").value) || 1
     };
 
     function init() {
@@ -183,7 +183,7 @@
     function updateWinnersPerGift() {
       winnersPerGift.Round1_Strawberry = parseInt(document.getElementById("Round1_StrawberryLimit").value) || 1;
       winnersPerGift.Round2_Forever_Plushie = parseInt(document.getElementById("Round2_Forever_PlushieLimit").value) || 1;
-      winnersPerGift.Gift3 = parseInt(document.getElementById("gift3Limit").value) || 1;
+      winnersPerGift.Round3_TailorMade = parseInt(document.getElementById("Round3_TailorMadeLimit").value) || 1;
       console.log("Updated winnersPerGift:", winnersPerGift);
       fetchNames();
     }
@@ -346,7 +346,7 @@
     };
 
     resetBtn.onclick = () => {
-      winners = { Round1_Strawberry: [], Round2_Forever_Plushie: [], Gift3: [] };
+      winners = { Round1_Strawberry: [], Round2_Forever_Plushie: [], Round3_TailorMade: [] };
       resultEl.innerHTML = "✅ 抽獎已重置！";
       fetchNames();
     };
@@ -358,7 +358,7 @@
 
     document.getElementById("Round1_StrawberryLimit").addEventListener("change", updateWinnersPerGift);
     document.getElementById("Round2_Forever_PlushieLimit").addEventListener("change", updateWinnersPerGift);
-    document.getElementById("gift3Limit").addEventListener("change", updateWinnersPerGift);
+    document.getElementById("Round3_TailorMadeLimit").addEventListener("change", updateWinnersPerGift);
 
     window.addEventListener("resize", setCanvasSize);
     window.addEventListener("DOMContentLoaded", () => {
