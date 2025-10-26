@@ -141,7 +141,7 @@
   <select id="giftSelector">
     <option value="Round1_Strawberry">🎁 Round1_Strawberry</option>
     <option value="Round2_Forever Plushie">🎁 Round2_Forever Plushie</option>
-    <option value="Gift3">🎁 Gift3</option>
+    <option value="Round3_TailorMade">🎁 Round3_TailorMade</option>
   </select>
   <div id="wheel-container">
     <canvas id="wheel"></canvas>
@@ -164,8 +164,8 @@
     let cachedData = [];
     let drawParticipants = [];
     let spinPool = [];
-    let winners = { Round1_Strawberry: [], Round2_Forever Plushie: [], Gift3: [] };
-    const winnersPerGift = { Round1_Strawberry: 1, Round2_Forever Plushie: 1, Gift3: 3 };
+    let winners = { Round1_Strawberry: [], Round2_Forever Plushie: [], Round3_TailorMade: [] };
+    const winnersPerGift = { Round1_Strawberry: 1, Round2_Forever Plushie: 1, Round3_TailorMade: 3 };
 
     function init() {
       ctx = canvas.getContext("2d");
@@ -364,7 +364,7 @@
     };
 
     resetBtn.onclick = () => {
-      winners = { Round1_Strawberry: [], Round2_Forever Plushie: [], Gift3: [] };
+      winners = { Round1_Strawberry: [], Round2_Forever Plushie: [], Round3_TailorMade: [] };
       resultEl.innerHTML = "✅ 抽獎已重置！";
       fetchNames();
     };
