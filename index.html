@@ -3,461 +3,386 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🎉 Petopia Lucky Draw - Dynamic Edition 🎁</title>
+  <title>🎉 Petopia Pro Event Draw 🎁</title>
   <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      background: linear-gradient(to right, #a8edea, #fed6e3);
+      background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
       font-family: 'Luckiest Guy', cursive, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       min-height: 100vh;
-      overflow: auto;
       padding: 20px;
     }
     h1 {
-      color: #fff;
-      text-shadow: 2px 2px 8px #000;
-      font-size: 2rem;
-      text-align: center;
-      margin: 1rem;
+      color: #fff; text-shadow: 2px 2px 0px #ffb6b9, 4px 4px 0px rgba(0,0,0,0.2);
+      font-size: 2.2rem; text-align: center; margin-bottom: 20px;
     }
-    #wheel-container {
-      position: relative;
-      width: 100%;
-      max-width: 400px;
-      min-width: 250px;
-      margin: 20px 0;
-    }
-    #wheel {
-      width: 100%;
-      height: auto;
-      border-radius: 50%;
-      border: 10px solid #fff;
-      box-shadow: 0 0 30px #ffb6b9;
-      display: block;
-    }
-    .pointer {
-      width: 0;
-      height: 0;
-      border-left: 20px solid transparent;
-      border-right: 20px solid transparent;
-      border-top: 30px solid #fff;
-      position: absolute;
-      top: 10px;
-      left: calc(50% - 20px);
-      z-index: 10;
-    }
-    /* 控制面板樣式 */
     .control-panel {
-      background: rgba(255, 255, 255, 0.2);
-      padding: 15px;
-      border-radius: 15px;
-      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 500px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      gap: 15px;
     }
-    .control-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
+    label { color: #ff6b6b; font-size: 0.9rem; font-family: sans-serif; font-weight: bold; }
+    select, input {
+      width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px;
+      font-size: 1rem; outline: none; transition: 0.3s;
     }
-    label {
-      color: #fff;
-      text-shadow: 1px 1px 3px #000;
-      font-size: 1.1rem;
-    }
-    select, button, input {
-      font-size: 1.1rem;
-      padding: 8px 15px;
-      border-radius: 10px;
-      border: none;
-      font-family: inherit;
-      outline: none;
-    }
-    select {
-      min-width: 200px;
-      border: 2px solid #fff;
-    }
-    input[type="number"] {
-      width: 80px;
-      text-align: center;
-      border: 2px solid #ffb6b9;
-    }
-    button {
-      background: #ffb6b9;
-      box-shadow: 0 4px 0 #eb8f92;
-      cursor: pointer;
-      color: #fff;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-      transition: transform 0.1s;
-    }
-    button:active {
-      transform: translateY(4px);
-      box-shadow: 0 0 0 #eb8f92;
-    }
-    button:disabled {
-      background: #ccc;
-      box-shadow: none;
-      cursor: not-allowed;
-      transform: none;
-    }
-    #result {
-      font-size: 1.3rem;
-      text-align: center;
-      color: #fff;
-      text-shadow: 2px 2px 5px #000;
-      margin-top: 10px;
-      max-width: 90%;
-      word-wrap: break-word;
-      min-height: 1.5em;
-    }
+    select:focus, input:focus { border-color: #ffb6b9; }
     
-    @media (max-width: 600px) {
-      h1 { font-size: 1.5rem; }
-      #wheel-container { max-width: 80vw; }
-      .control-panel { width: 100%; }
+    #wheel-container {
+      position: relative; width: 300px; height: 300px; margin: 20px auto;
     }
+    #wheel {
+      width: 100%; height: 100%; border-radius: 50%;
+      border: 8px solid #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .pointer {
+      position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+      border-left: 15px solid transparent; border-right: 15px solid transparent;
+      border-top: 30px solid #ff6b6b; z-index: 10;
+    }
+
+    button {
+      padding: 12px; border: none; border-radius: 50px; font-size: 1.2rem;
+      font-family: 'Luckiest Guy', cursive; cursor: pointer; color: white;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.2); width: 100%;
+    }
+    button:active { transform: translateY(2px); box-shadow: none; }
+    #spin { background: #ff6b6b; }
+    #reset-round { background: #a29bfe; font-size: 0.9rem; margin-top: 10px; }
+
+    #status-msg { text-align: center; color: #fff; margin: 10px 0; min-height: 1.5em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    
+    .winners-box {
+      width: 100%; max-width: 500px; background: rgba(255,255,255,0.9);
+      border-radius: 15px; padding: 15px; display: none; margin-top: 20px;
+    }
+    .winner-row {
+      display: flex; justify-content: space-between; border-bottom: 1px solid #ddd;
+      padding: 8px 0; font-family: sans-serif;
+    }
+    .w-prize { color: #ff6b6b; font-weight: bold; }
+
+    /* 隱藏手動輸入框，只在沒有設定檔時顯示 */
+    .manual-input { display: none; } 
   </style>
 </head>
 <body>
 
-  <h1>🎉 PETOPIA LUCKY DRAW 2026 🎁</h1>
+  <h1>🎉 PETOPIA LUCKY DRAW 🎁</h1>
 
   <div class="control-panel">
-    <div class="control-row">
-      <label for="giftSelector">🎁 選擇獎品 Round：</label>
-      <select id="giftSelector">
-        <option value="" disabled selected>⏳ 讀取資料中...</option>
+    <div>
+      <label>📂 1. 選擇活動 (Event)：</label>
+      <select id="eventSelector">
+        <option disabled selected>⏳ 讀取資料中...</option>
       </select>
     </div>
-    
-    <div class="control-row">
-      <label for="currentLimit">🏆 本輪中獎名額：</label>
-      <input type="number" id="currentLimit" value="1" min="1">
+
+    <div id="preset-area">
+      <label>🏆 2. 選擇獎品 (Prize)：</label>
+      <select id="prizeSelector">
+        <option disabled selected>👆 請先選擇活動</option>
+      </select>
     </div>
+
+    <div class="manual-input" id="manual-area">
+      <label>⚠️ 無預設獎品，請手動輸入：</label>
+      <div style="display:flex; gap:10px;">
+        <input type="text" id="manualPrize" placeholder="獎品名稱">
+        <input type="number" id="manualCount" value="1" min="1" style="width:80px;">
+      </div>
+    </div>
+
+    <button id="spin" style="margin-top: 15px;">GO! SPIN!</button>
   </div>
+
+  <div id="status-msg">準備就緒...</div>
 
   <div id="wheel-container">
-    <canvas id="wheel"></canvas>
     <div class="pointer"></div>
+    <canvas id="wheel"></canvas>
   </div>
 
-  <div class="control-row">
-    <button id="spin">SPIN!</button>
-    <button id="show-winners">查看所有中獎者</button>
-    <button id="reset">重置所有紀錄</button>
+  <div class="winners-box" id="winnersBox">
+    <h3 style="text-align:center; margin:0 0 10px 0;">🏆 中獎名單</h3>
+    <div id="winnersList"></div>
+    <button id="reset-round">🔄 重置本場紀錄</button>
   </div>
-
-  <div id="result">準備開始...</div>
 
   <script>
-    const canvas = document.getElementById("wheel");
-    let ctx = null;
-    const spinBtn = document.getElementById("spin");
-    const showWinnersBtn = document.getElementById("show-winners");
-    const resetBtn = document.getElementById("reset");
-    const resultEl = document.getElementById("result");
-    const giftSelector = document.getElementById("giftSelector");
-    const currentLimitInput = document.getElementById("currentLimit");
+    // ⚠️ 記得改這裡的網址！
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbw6JtHllSRqbV1coheU9mXdk7LELEczzxTIjJeH1sNa6fhwxRq86Mc6GOMsTsja1ttiSQ/exec";
 
-    // 資料儲存
-    let cachedData = [];          // 從 Google Sheet 抓回來的原始資料
-    let drawParticipants = [];    // 當前輪次的參與者 (畫圖用)
-    let spinPool = [];            // 當前輪次的抽獎池 (含倍數)
+    let rawData = {};         // 存放 { participants: [], settings: [] }
+    let currentPool = [];     // 該活動未中獎名單
+    let sessionHistory = [];  // 該活動中獎紀錄
+    let currentSettings = []; // 該活動的獎品設定
+    let isSpinning = false;
     
-    // 狀態管理
-    let winners = {};             // 紀錄每個獎品的中獎者名單 { "GiftA": ["User1"], "GiftB": [] }
-    let winnerLimits = {};        // 紀錄每個獎品的設定人數 { "GiftA": 2, "GiftB": 5 }
-    let uniqueGiftsList = [];     // 所有獎品名稱列表
+    // DOM
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const eventSelector = document.getElementById("eventSelector");
+    const prizeSelector = document.getElementById("prizeSelector");
+    const manualArea = document.getElementById("manual-area");
+    const manualPrize = document.getElementById("manualPrize");
+    const manualCount = document.getElementById("manualCount");
+    const statusMsg = document.getElementById("status-msg");
+    const winnersBox = document.getElementById("winnersBox");
+    const winnersList = document.getElementById("winnersList");
+    const spinBtn = document.getElementById("spin");
+    const resetBtn = document.getElementById("reset-round");
 
-    // 1. 初始化 Canvas
     function init() {
-      ctx = canvas.getContext("2d");
-      if (!ctx) {
-        resultEl.innerHTML = "❌ 瀏覽器不支援 Canvas";
-        return false;
-      }
-      return true;
+      resizeCanvas();
+      window.addEventListener("resize", resizeCanvas);
+      fetchData();
     }
 
-    function setCanvasSize() {
-      const container = document.getElementById("wheel-container");
-      const size = Math.min(container.offsetWidth || 300, 400);
+    function resizeCanvas() {
+      const size = document.getElementById("wheel-container").offsetWidth;
       canvas.width = size;
       canvas.height = size;
       drawWheel();
     }
 
-    // 2. 從 Google Sheet 抓取資料
-    async function fetchNames() {
-      resultEl.innerHTML = "⏳ 載入資料中...";
-      spinBtn.disabled = true;
-      
+    // 1. 下載資料
+    async function fetchData() {
       try {
-        const webAppUrl = "https://script.google.com/macros/s/AKfycbw6JtHllSRqbV1coheU9mXdk7LELEczzxTIjJeH1sNa6fhwxRq86Mc6GOMsTsja1ttiSQ/exec";
-        const response = await fetch(webAppUrl);
-        if (!response.ok) throw new Error("Network error");
-        const data = await response.json();
+        statusMsg.innerText = "連線 Google Sheet 中...";
+        const res = await fetch(webAppUrl + "?t=" + new Date().getTime());
+        const json = await res.json();
+        
+        rawData = json; // 格式: { participants: [...], settings: [...] }
 
-        // 整理資料
-        cachedData = data.map(item => ({
-          name: item.name,
-          Selectedgifts: item.Selectedgifts, // 確保 Google Sheet 欄位名稱對應
-          multiple: parseInt(item.multiple || 1)
-        }));
+        // 提取所有活動名稱 (從參加者名單找)
+        const events = [...new Set(json.participants.map(p => p.event))].sort();
+        
+        eventSelector.innerHTML = "<option disabled selected>👇 請選擇活動</option>";
+        events.forEach(e => {
+          const opt = document.createElement("option");
+          opt.value = e;
+          opt.text = e;
+          eventSelector.add(opt);
+        });
 
-        // 動態找出所有獎品名稱 (去重複)
-        const allGifts = cachedData.map(item => item.Selectedgifts).filter(g => g);
-        uniqueGiftsList = [...new Set(allGifts)];
-
-        updateGiftSelector();
-        prepareCurrentRound();
+        statusMsg.innerText = "✅ 載入完成";
         
       } catch (e) {
         console.error(e);
-        resultEl.innerHTML = "❌ 資料載入失敗，請檢查網路";
+        statusMsg.innerText = "❌ 錯誤: 請檢查網址或權限";
       }
     }
 
-    // 3. 更新下拉選單 (動態生成)
-    function updateGiftSelector() {
-      // 記住當前選中的值 (如果有的話)，避免刷新後跑掉
-      const currentSelection = giftSelector.value;
+    // 2. 切換活動
+    eventSelector.onchange = () => {
+      sessionHistory = []; // 清空得獎紀錄
+      updateWinnersDisplay();
+      
+      const eventName = eventSelector.value;
 
-      giftSelector.innerHTML = ""; // 清空選單
+      // 載入該活動的參加者
+      resetCurrentPool(eventName);
 
-      if (uniqueGiftsList.length === 0) {
-        const option = document.createElement("option");
-        option.text = "⚠️ 無資料";
-        giftSelector.add(option);
-        return;
-      }
+      // 載入該活動的獎品設定 (從 settings 陣列找)
+      currentSettings = rawData.settings.filter(s => s.event === eventName);
+      
+      updatePrizeDropdown();
+    };
 
-      uniqueGiftsList.forEach(giftName => {
-        // 初始化這個獎品的狀態 (如果尚未存在)
-        if (!winners[giftName]) winners[giftName] = [];
-        if (!winnerLimits[giftName]) winnerLimits[giftName] = 2; // 預設每個獎品抽 2 人，可自行修改預設值
-
-        const option = document.createElement("option");
-        option.value = giftName;
-        option.text = `🎁 ${giftName}`;
-        giftSelector.add(option);
-      });
-
-      // 嘗試恢復之前的選擇，否則選第一個
-      if (currentSelection && uniqueGiftsList.includes(currentSelection)) {
-        giftSelector.value = currentSelection;
+    // 更新獎品下拉選單
+    function updatePrizeDropdown() {
+      prizeSelector.innerHTML = "";
+      
+      if (currentSettings.length > 0) {
+        // 有預設獎品
+        manualArea.style.display = "none";
+        prizeSelector.style.display = "block";
+        
+        // 自動加上選項
+        currentSettings.forEach((setting, index) => {
+           const opt = document.createElement("option");
+           // 將資料存在 value 裡方便讀取: "大獎|1"
+           opt.value = `${setting.prize}|${setting.count}`;
+           opt.text = `${setting.prize} (抽 ${setting.count} 人)`;
+           prizeSelector.add(opt);
+        });
       } else {
-        giftSelector.value = uniqueGiftsList[0];
-      }
-      
-      // 更新輸入框顯示的數字
-      updateLimitInputDisplay();
-    }
-
-    // 當下拉選單改變時，更新輸入框數字
-    function updateLimitInputDisplay() {
-      const selectedGift = giftSelector.value;
-      if (selectedGift && winnerLimits[selectedGift]) {
-        currentLimitInput.value = winnerLimits[selectedGift];
+        // 無預設獎品，顯示手動輸入框
+        prizeSelector.innerHTML = "<option>⚠️ 無預設設定</option>";
+        prizeSelector.style.display = "none";
+        manualArea.style.display = "block";
       }
     }
 
-    // 當輸入框數字改變時，保存到該獎品的設定中
-    currentLimitInput.onchange = () => {
-      const selectedGift = giftSelector.value;
-      const val = parseInt(currentLimitInput.value);
-      if (selectedGift && val > 0) {
-        winnerLimits[selectedGift] = val;
-        prepareCurrentRound(); // 重新檢查狀態 (例如是否顯示已額滿)
-      }
-    };
+    // 重置名單
+    function resetCurrentPool(eventName) {
+      const participants = rawData.participants.filter(p => p.event === eventName);
+      const winnerNames = new Set(sessionHistory.map(w => w.name));
 
-    giftSelector.onchange = () => {
-      updateLimitInputDisplay();
-      prepareCurrentRound();
-    };
-
-    // 4. 準備當前輪次的數據
-    function prepareCurrentRound() {
-      const selectedGift = giftSelector.value;
-      if (!selectedGift) return;
-
-      const currentLimit = winnerLimits[selectedGift];
-      const currentWinners = winners[selectedGift];
-
-      // 檢查是否已抽完
-      if (currentWinners.length >= currentLimit) {
-        drawParticipants = [];
-        spinPool = [];
-        drawWheel(); // 畫空轉盤或訊息
-        resultEl.innerHTML = `✅ <b>${selectedGift}</b> 抽獎完成！<br>(已抽出 ${currentWinners.length}/${currentLimit} 位)`;
-        spinBtn.disabled = true;
-        return;
-      }
-
-      // 過濾出：參加這個獎品 & 還沒中過這個獎 的人
-      const filtered = cachedData.filter(p => 
-        p.Selectedgifts === selectedGift && !currentWinners.includes(p.name)
-      );
-
-      drawParticipants = filtered.map(p => ({ name: p.name, multiple: p.multiple }));
-      
-      // 建立抽獎池 (根據倍數塞入名單)
-      spinPool = [];
-      filtered.forEach(p => {
-        for(let i=0; i<p.multiple; i++) spinPool.push(p.name);
+      currentPool = [];
+      participants.forEach(p => {
+        if (!winnerNames.has(p.name)) {
+           for(let i=0; i < (p.multiple || 1); i++) currentPool.push(p.name);
+        }
       });
+      currentPool.sort(() => Math.random() - 0.5);
 
+      const uniqueCount = new Set(currentPool).size;
+      statusMsg.innerHTML = `活動：<b>${eventName}</b> | 剩餘人數：${uniqueCount} 人`;
       drawWheel();
-      
-      if (drawParticipants.length === 0) {
-        resultEl.innerHTML = "⚠️ 此獎項無可用的參與者";
-        spinBtn.disabled = true;
-      } else {
-        resultEl.innerHTML = `準備就緒：<b>${selectedGift}</b><br>進度：${currentWinners.length} / ${currentLimit}`;
-        spinBtn.disabled = false;
-      }
     }
 
-    // 5. 繪製轉盤 (Canvas)
+    // 3. 畫圖
     function drawWheel() {
-      if (!ctx) return;
       const size = canvas.width;
       ctx.clearRect(0, 0, size, size);
-
-      if (drawParticipants.length === 0) {
-        ctx.fillStyle = "#666";
-        ctx.font = "bold 20px sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("無參與者 / 已結束", size / 2, size / 2);
+      
+      const distinctNames = [...new Set(currentPool)];
+      const count = distinctNames.length;
+      
+      if (count === 0) {
+        ctx.fillStyle = "#ddd";
+        ctx.beginPath(); ctx.arc(size/2, size/2, size/2 - 5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#555"; ctx.font = "20px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("無人 / 已抽完", size/2, size/2);
         return;
       }
 
-      const totalWeight = drawParticipants.reduce((sum, p) => sum + p.multiple, 0);
-      const anglePerWeight = (2 * Math.PI) / totalWeight;
-      const colors = ["#ff9ff3", "#feca57", "#ff6b6b", "#48dbfb", "#1dd1a1", "#54a0ff", "#5f27cd"];
+      const arc = Math.PI * 2 / count;
+      const colors = ["#ff9ff3", "#feca57", "#ff6b6b", "#48dbfb", "#1dd1a1"];
 
-      let currentAngle = 0;
-      drawParticipants.forEach((p, i) => {
-        const sliceAngle = p.multiple * anglePerWeight;
-        
+      distinctNames.forEach((name, i) => {
+        const angle = i * arc;
         ctx.beginPath();
-        ctx.moveTo(size / 2, size / 2);
-        ctx.arc(size / 2, size / 2, size / 2, currentAngle, currentAngle + sliceAngle);
         ctx.fillStyle = colors[i % colors.length];
-        ctx.fill();
-        ctx.stroke();
-
-        // 簡化的文字繪製 (可選)
+        ctx.moveTo(size/2, size/2);
+        ctx.arc(size/2, size/2, size/2 - 10, angle, angle + arc);
+        ctx.fill(); ctx.stroke();
+        
         ctx.save();
         ctx.translate(size/2, size/2);
-        ctx.rotate(currentAngle + sliceAngle/2);
-        ctx.textAlign = "right";
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 14px sans-serif";
-        ctx.fillText(p.name, size/2 - 20, 5);
+        ctx.rotate(angle + arc/2);
+        ctx.textAlign = "right"; ctx.fillStyle = "#fff"; ctx.font = "bold 14px sans-serif";
+        ctx.fillText(name.substring(0, 8), size/2 - 25, 5);
         ctx.restore();
-
-        currentAngle += sliceAngle;
       });
     }
 
-    // 6. 旋轉邏輯
-    function spinWheel() {
-      if (spinPool.length === 0) return;
+    // 4. SPIN
+    spinBtn.onclick = () => {
+      if (isSpinning || currentPool.length === 0) return;
+      if (!eventSelector.value) { alert("請先選擇活動！"); return; }
+      
+      // 決定獎品和人數
+      let prizeName, countToDraw;
+      
+      if (currentSettings.length > 0) {
+        // 使用預設設定
+        const val = prizeSelector.value.split("|");
+        prizeName = val[0];
+        countToDraw = parseInt(val[1]);
+      } else {
+        // 使用手動輸入
+        prizeName = manualPrize.value || "神秘禮物";
+        countToDraw = parseInt(manualCount.value) || 1;
+      }
+      
+      const uniqueLeft = new Set(currentPool).size;
+      if (uniqueLeft < countToDraw) {
+        alert(`人數不足！剩餘 ${uniqueLeft} 人，設定需抽 ${countToDraw} 人。`);
+        return;
+      }
 
-      const selectedGift = giftSelector.value;
-      const winnerName = spinPool[Math.floor(Math.random() * spinPool.length)];
+      isSpinning = true;
+      spinBtn.disabled = true;
       
-      // 計算角度以停在該名字上
-      const pIndex = drawParticipants.findIndex(p => p.name === winnerName);
-      const totalWeight = drawParticipants.reduce((sum, p) => sum + p.multiple, 0);
-      const anglePerWeight = (2 * Math.PI) / totalWeight;
-      
-      let preAngle = 0;
-      for(let i=0; i<pIndex; i++) preAngle += drawParticipants[i].multiple * anglePerWeight;
-      
-      // 目標中心角度
-      const targetCenter = preAngle + (drawParticipants[pIndex].multiple * anglePerWeight) / 2;
-      // Canvas 0度在右邊(3點鐘)，指針在上方(12點鐘/270度/-90度)
-      // 需要旋轉的角度 = (360 - 目標角度) - 90度偏移
-      const stopAngle = (2 * Math.PI) - targetCenter - (Math.PI / 2); 
-      
-      // 多轉幾圈 (5圈)
-      const finalRotate = stopAngle + (5 * 2 * Math.PI);
+      // 選出中獎者
+      let roundWinners = [];
+      let tempPool = [...currentPool];
+      for(let k=0; k<countToDraw; k++) {
+        const idx = Math.floor(Math.random() * tempPool.length);
+        const winner = tempPool[idx];
+        roundWinners.push(winner);
+        tempPool = tempPool.filter(n => n !== winner);
+      }
 
       // 動畫
-      canvas.style.transition = "transform 3s cubic-bezier(0.25, 0.1, 0.25, 1)";
-      canvas.style.transform = `rotate(${finalRotate}rad)`;
+      let rotation = 0;
+      let speed = 30;
+      const animate = () => {
+        rotation += speed;
+        speed -= 0.15;
+        canvas.style.transform = `rotate(${rotation}deg)`;
+        if (speed > 0) {
+          requestAnimationFrame(animate);
+        } else {
+          finishSpin(roundWinners, prizeName);
+        }
+      };
+      animate();
+    };
+
+    function finishSpin(winners, prize) {
+      isSpinning = false;
+      spinBtn.disabled = false;
       
-      spinBtn.disabled = true;
-      resetBtn.disabled = true;
-      giftSelector.disabled = true;
+      winners.forEach(w => sessionHistory.push({ name: w, prize: prize }));
+      statusMsg.innerHTML = `🎉 恭喜 <b>${winners.join(", ")}</b> 獲得 ${prize}！`;
+      
+      updateWinnersDisplay();
+      
+      // 如果是用下拉選單，自動跳到下一個獎品 (Optional, 但很方便)
+      if (currentSettings.length > 0) {
+         const currIdx = prizeSelector.selectedIndex;
+         if (currIdx < prizeSelector.options.length - 1) {
+            prizeSelector.selectedIndex = currIdx + 1;
+         }
+      }
 
       setTimeout(() => {
-        // 動畫結束
         canvas.style.transition = "none";
-        canvas.style.transform = `rotate(${stopAngle}rad)`; // 重置到實際角度避免數值過大
-        
-        // 紀錄中獎
-        winners[selectedGift].push(winnerName);
-        resultEl.innerHTML = `🎉 恭喜 <b>${winnerName}</b> 中獎！<br>(獎品: ${selectedGift})`;
-        
-        // 3秒後刷新介面
+        canvas.style.transform = `rotate(0deg)`;
         setTimeout(() => {
-          canvas.style.transform = "rotate(0rad)";
-          prepareCurrentRound();
-          spinBtn.disabled = false;
-          resetBtn.disabled = false;
-          giftSelector.disabled = false;
-        }, 2000);
-        
+             canvas.style.transition = "transform 3s cubic-bezier(0.25, 0.1, 0.25, 1)";
+             resetCurrentPool(eventSelector.value); 
+        }, 50);
       }, 3000);
     }
 
-    spinBtn.onclick = spinWheel;
+    function updateWinnersDisplay() {
+      if (sessionHistory.length === 0) {
+        winnersBox.style.display = "none"; return;
+      }
+      winnersBox.style.display = "block";
+      let html = "";
+      [...sessionHistory].reverse().forEach((item, idx) => {
+         const realIdx = sessionHistory.length - idx;
+         html += `<div class="winner-row"><span>#${realIdx} <b>${item.name}</b></span><span class="w-prize">${item.prize}</span></div>`;
+      });
+      winnersList.innerHTML = html;
+    }
 
     resetBtn.onclick = () => {
-      if(confirm("確定要重置所有中獎紀錄嗎？")) {
-        winners = {}; // 清空名單
-        // 保留 limits 設定
-        uniqueGiftsList.forEach(g => winners[g] = []);
-        prepareCurrentRound();
-        resultEl.innerHTML = "紀錄已重置";
+      if(confirm("確定重置？紀錄將消失。")) {
+        sessionHistory = [];
+        updateWinnersDisplay();
+        resetCurrentPool(eventSelector.value);
       }
     };
 
-    showWinnersBtn.onclick = () => {
-      let html = "<h3>📊 目前中獎名單</h3><div style='text-align:left; display:inline-block;'>";
-      for (const [gift, list] of Object.entries(winners)) {
-        if (list.length > 0) {
-          html += `<b>${gift}</b>: ${list.join(", ")}<br>`;
-        }
-      }
-      html += "</div>";
-      resultEl.innerHTML = html || "暫無中獎者";
-    };
-
-    window.addEventListener("resize", setCanvasSize);
-    window.addEventListener("DOMContentLoaded", () => {
-      if (init()) {
-        setCanvasSize();
-        fetchNames();
-      }
-    });
-
+    init();
   </script>
 </body>
 </html>
