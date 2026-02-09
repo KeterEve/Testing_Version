@@ -9,12 +9,12 @@
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      /* 👇 這裡設定預設(普通)背景圖 👇 */
+      /* 👇 預設背景圖 👇 */
       background-image: url('https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=2070&auto=format&fit=crop'); 
-      background-size: cover;       /* 讓圖片填滿整個螢幕 */
-      background-position: center;  /* 圖片置中 */
-      background-repeat: no-repeat; /* 不要重複 */
-      background-attachment: fixed; /* 滾動時背景固定 */
+      background-size: cover;       
+      background-position: center;  
+      background-repeat: no-repeat; 
+      background-attachment: fixed; 
       
       font-family: 'Luckiest Guy', cursive, sans-serif;
       display: flex;
@@ -22,11 +22,10 @@
       align-items: center;
       min-height: 100vh;
       padding: 20px;
-      transition: background-image 0.5s ease-in-out; /* 讓背景切換有淡入淡出效果 */
+      transition: background-image 0.5s ease-in-out;
     }
     h1 {
       color: #fff; 
-      /* 加強文字陰影，確保在任何背景圖片上都看得清 */
       text-shadow: 3px 3px 0px #000, 0 0 10px rgba(0,0,0,0.8);
       font-size: 2.2rem; text-align: center; margin-bottom: 20px;
     }
@@ -88,7 +87,7 @@
 
     #status-msg { 
       text-align: center; color: #fff; margin: 10px 0; min-height: 1.5em; 
-      text-shadow: 2px 2px 4px #000; /* 加強陰影 */
+      text-shadow: 2px 2px 4px #000; 
       font-family: sans-serif; font-weight: bold;
     }
     
@@ -126,7 +125,7 @@
       </select>
     </div>
 
-    <div id="loyalBadge" class="loyal-badge">👑 只限 LOYAL CUSTOMER 參加</div>
+    <div id="loyalBadge" class="loyal-badge">👑 只限符合條件之參加者</div>
 
     <div class="manual-input" id="manual-area">
       <label>⚠️ 手動設定：</label>
@@ -136,7 +135,7 @@
       </div>
       <div class="checkbox-container">
         <input type="checkbox" id="manualLoyal"> 
-        <label for="manualLoyal" style="margin:0; color:#555;">只限 Loyal Customer</label>
+        <label for="manualLoyal" style="margin:0; color:#555;">只限符合條件之參加者</label>
       </div>
     </div>
 
@@ -159,9 +158,9 @@
   <script>
     const webAppUrl = "https://script.google.com/macros/s/AKfycbyYM-kQ8vSsiVz6laIm0Loch66_kHbjLiMCijiwDoBfUlmeJZFLXc6UBRvN10fHK7v6qw/exec";
 
-    // 👇 在這裡設定你的圖片網址 👇
-    const bgNormal = "https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=2070&auto=format&fit=crop"; // 普通背景
-    const bgLoyal = "R0014735.jpg";  // VIP 背景 (金色/豪華感)
+    // 背景圖設定
+    const bgNormal = "https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=2070&auto=format&fit=crop"; 
+    const bgLoyal = "https://images.unsplash.com/photo-1577053644083-d9a2637b989e?q=80&w=2070&auto=format&fit=crop"; 
 
     let rawData = {};         
     let currentPool = [];     
@@ -169,7 +168,6 @@
     let currentSettings = []; 
     let isSpinning = false;
     
-    // DOM
     const canvas = document.getElementById("wheel");
     const ctx = canvas.getContext("2d");
     const eventSelector = document.getElementById("eventSelector");
@@ -189,7 +187,6 @@
       resizeCanvas();
       window.addEventListener("resize", resizeCanvas);
       fetchData();
-      // 初始化背景
       document.body.style.backgroundImage = `url('${bgNormal}')`;
     }
 
@@ -237,14 +234,13 @@
       resetCurrentPool(eventSelector.value, isLoyalOnly);
     };
 
-    // ✨ 這裡修改了背景切換邏輯
     function updateUIForLoyal(isLoyal) {
       if (isLoyal) {
         loyalBadge.style.display = "block";
-        document.body.style.backgroundImage = `url('${bgLoyal}')`; // 切換到 VIP 圖片
+        document.body.style.backgroundImage = `url('${bgLoyal}')`; 
       } else {
         loyalBadge.style.display = "none";
-        document.body.style.backgroundImage = `url('${bgNormal}')`; // 切換回 普通 圖片
+        document.body.style.backgroundImage = `url('${bgNormal}')`; 
       }
     }
 
@@ -285,8 +281,10 @@
         }
       });
       currentPool.sort(() => Math.random() - 0.5);
+      
       let msg = `活動：<b>${eventName}</b> | 參與人數：${validCandidatesCount}`;
-      if (requireLoyal) msg += ` <span style="color:#ffd700; font-weight:bold; text-shadow:1px 1px 2px #000;">(已過濾非會員)</span>`;
+      // ✅ 修改 2：這裡移除了「(已過濾非會員)」的顯示代碼
+      
       statusMsg.innerHTML = msg;
       drawWheel();
     }
