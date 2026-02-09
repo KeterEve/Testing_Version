@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🎉 Petopia Pro Event Draw 🎁</title>
+  <title>🎉 Petopia Pro Draw (Final) 🎁</title>
   <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
@@ -31,6 +31,7 @@
       display: flex;
       flex-direction: column;
       gap: 15px;
+      position: relative;
     }
     label { color: #ff6b6b; font-size: 0.9rem; font-family: sans-serif; font-weight: bold; }
     select, input {
@@ -39,6 +40,21 @@
     }
     select:focus, input:focus { border-color: #ffb6b9; }
     
+    /* Loyal Badge */
+    .loyal-badge {
+      display: none;
+      background: #ffd700;
+      color: #d35400;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      text-align: center;
+      border: 2px solid #e67e22;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-top: -10px;
+    }
+
     #wheel-container {
       position: relative; width: 300px; height: 300px; margin: 20px auto;
     }
@@ -61,7 +77,7 @@
     #spin { background: #ff6b6b; }
     #reset-round { background: #a29bfe; font-size: 0.9rem; margin-top: 10px; }
 
-    #status-msg { text-align: center; color: #fff; margin: 10px 0; min-height: 1.5em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    #status-msg { text-align: center; color: #fff; margin: 10px 0; min-height: 1.5em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); font-family: sans-serif; }
     
     .winners-box {
       width: 100%; max-width: 500px; background: rgba(255,255,255,0.9);
@@ -72,14 +88,15 @@
       padding: 8px 0; font-family: sans-serif;
     }
     .w-prize { color: #ff6b6b; font-weight: bold; }
-
-    /* 隱藏手動輸入框，只在沒有設定檔時顯示 */
-    .manual-input { display: none; } 
+    
+    .manual-input { display: none; margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;}
+    .checkbox-container { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+    .checkbox-container input { width: auto; }
   </style>
 </head>
 <body>
 
-  <h1>🎉 PETOPIA LUCKY DRAW 🎁</h1>
+  <h1>🎉 PETOPIA PRO DRAW 🎁</h1>
 
   <div class="control-panel">
     <div>
@@ -96,11 +113,17 @@
       </select>
     </div>
 
+    <div id="loyalBadge" class="loyal-badge">👑 只限 LOYAL CUSTOMER 參加</div>
+
     <div class="manual-input" id="manual-area">
-      <label>⚠️ 無預設獎品，請手動輸入：</label>
+      <label>⚠️ 手動設定：</label>
       <div style="display:flex; gap:10px;">
         <input type="text" id="manualPrize" placeholder="獎品名稱">
         <input type="number" id="manualCount" value="1" min="1" style="width:80px;">
+      </div>
+      <div class="checkbox-container">
+        <input type="checkbox" id="manualLoyal"> 
+        <label for="manualLoyal" style="margin:0; color:#555;">只限 Loyal Customer</label>
       </div>
     </div>
 
@@ -121,13 +144,14 @@
   </div>
 
   <script>
-    // ✅ 已更新為你剛剛提供的最新網址
+    // ✅ 這裡填入你的 Web App URL
     const webAppUrl = "https://script.google.com/macros/s/AKfycbyYM-kQ8vSsiVz6laIm0Loch66_kHbjLiMCijiwDoBfUlmeJZFLXc6UBRvN10fHK7v6qw/exec";
 
-    let rawData = {};         // 存放 { participants: [], settings: [] }
-    let currentPool = [];     // 該活動未中獎名單
-    let sessionHistory = [];  // 該活動中獎紀錄
-    let currentSettings = []; // 該活動的獎品設定
+    let rawData = {};         
+    let currentPool = [];     // 真正的抽獎池 (有票的人)
+    let displayCount = 0;     // 顯示的人數 (包含0票的人)
+    let sessionHistory = [];  
+    let currentSettings = []; 
     let isSpinning = false;
     
     // DOM
@@ -138,6 +162,8 @@
     const manualArea = document.getElementById("manual-area");
     const manualPrize = document.getElementById("manualPrize");
     const manualCount = document.getElementById("manualCount");
+    const manualLoyal = document.getElementById("manualLoyal");
+    const loyalBadge = document.getElementById("loyalBadge");
     const statusMsg = document.getElementById("status-msg");
     const winnersBox = document.getElementById("winnersBox");
     const winnersList = document.getElementById("winnersList");
@@ -157,16 +183,14 @@
       drawWheel();
     }
 
-    // 1. 下載資料
     async function fetchData() {
       try {
         statusMsg.innerText = "連線 Google Sheet 中...";
         const res = await fetch(webAppUrl + "?t=" + new Date().getTime());
         const json = await res.json();
         
-        rawData = json; // 格式: { participants: [...], settings: [...] }
+        rawData = json; 
 
-        // 提取所有活動名稱 (從參加者名單找)
         const events = [...new Set(json.participants.map(p => p.event))].sort();
         
         eventSelector.innerHTML = "<option disabled selected>👇 請選擇活動</option>";
@@ -185,66 +209,105 @@
       }
     }
 
-    // 2. 切換活動
+    // 切換活動
     eventSelector.onchange = () => {
-      sessionHistory = []; // 清空得獎紀錄
+      sessionHistory = []; 
       updateWinnersDisplay();
       
       const eventName = eventSelector.value;
-
-      // 載入該活動的參加者
-      resetCurrentPool(eventName);
-
-      // 載入該活動的獎品設定 (從 settings 陣列找)
       currentSettings = rawData.settings.filter(s => s.event === eventName);
       
       updatePrizeDropdown();
+      resetCurrentPool(eventName, false);
     };
 
-    // 更新獎品下拉選單
+    // 切換獎品 -> 觸發 Loyal 檢查
+    prizeSelector.onchange = () => {
+      const val = prizeSelector.value.split("|");
+      const isLoyalOnly = (val[2] === "true");
+      
+      updateUIForLoyal(isLoyalOnly);
+      resetCurrentPool(eventSelector.value, isLoyalOnly);
+    };
+
+    function updateUIForLoyal(isLoyal) {
+      if (isLoyal) {
+        loyalBadge.style.display = "block";
+        document.body.style.background = "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"; 
+      } else {
+        loyalBadge.style.display = "none";
+        document.body.style.background = "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)";
+      }
+    }
+
     function updatePrizeDropdown() {
       prizeSelector.innerHTML = "";
       
       if (currentSettings.length > 0) {
-        // 有預設獎品
         manualArea.style.display = "none";
         prizeSelector.style.display = "block";
         
-        // 自動加上選項
-        currentSettings.forEach((setting, index) => {
+        currentSettings.forEach(setting => {
            const opt = document.createElement("option");
-           // 將資料存在 value 裡方便讀取: "大獎|1"
-           opt.value = `${setting.prize}|${setting.count}`;
-           opt.text = `${setting.prize} (抽 ${setting.count} 人)`;
+           opt.value = `${setting.prize}|${setting.count}|${setting.loyalOnly}`;
+           
+           let label = `${setting.prize} (抽 ${setting.count} 人)`;
+           if(setting.loyalOnly) label = "👑 " + label;
+           
+           opt.text = label;
            prizeSelector.add(opt);
         });
+        prizeSelector.onchange(); 
+
       } else {
-        // 無預設獎品，顯示手動輸入框
         prizeSelector.innerHTML = "<option>⚠️ 無預設設定</option>";
         prizeSelector.style.display = "none";
         manualArea.style.display = "block";
+        resetCurrentPool(eventSelector.value, false);
       }
     }
 
-    // 重置名單
-    function resetCurrentPool(eventName) {
+    // 重置名單 (核心邏輯更新：Multiple=0 的人算人數，但不可抽)
+    function resetCurrentPool(eventName, requireLoyal) {
+      if (!eventName) return;
+
       const participants = rawData.participants.filter(p => p.event === eventName);
       const winnerNames = new Set(sessionHistory.map(w => w.name));
 
       currentPool = [];
+      let validCandidatesCount = 0; // 這是「分母」，包含 Multiple=0 的人
+
       participants.forEach(p => {
-        if (!winnerNames.has(p.name)) {
-           for(let i=0; i < (p.multiple || 1); i++) currentPool.push(p.name);
+        // 1. 如果已經中獎 -> 跳過 (真跳過，不算入人數)
+        if (winnerNames.has(p.name)) return;
+
+        // 2. 如果要求 Loyal 但不是 -> 跳過 (真跳過，不算入人數)
+        if (requireLoyal && p.loyal !== 'Y') {
+          return;
+        }
+
+        // 走到這裡的都是「符合資格」的參加者 (無論 multiple 是 0 還是 10)
+        validCandidatesCount++;
+
+        // 3. 加入名單 (只有 Multiple > 0 的人才會進轉盤)
+        // 如果 multiple 是 0，這個迴圈跑 0 次，所以他不會進 currentPool
+        for(let i=0; i < (p.multiple || 0); i++) {
+          currentPool.push(p.name);
         }
       });
+      
       currentPool.sort(() => Math.random() - 0.5);
 
-      const uniqueCount = new Set(currentPool).size;
-      statusMsg.innerHTML = `活動：<b>${eventName}</b> | 剩餘人數：${uniqueCount} 人`;
+      let msg = `活動：<b>${eventName}</b> | 參與人數：${validCandidatesCount}`;
+      
+      if (requireLoyal) {
+        msg += ` <span style="color:#ffd700; font-weight:bold;">(已過濾非會員)</span>`;
+      }
+      statusMsg.innerHTML = msg;
+      
       drawWheel();
     }
 
-    // 3. 畫圖
     function drawWheel() {
       const size = canvas.width;
       ctx.clearRect(0, 0, size, size);
@@ -256,7 +319,7 @@
         ctx.fillStyle = "#ddd";
         ctx.beginPath(); ctx.arc(size/2, size/2, size/2 - 5, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = "#555"; ctx.font = "20px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.fillText("無人 / 已抽完", size/2, size/2);
+        ctx.fillText("無人 / 0票", size/2, size/2);
         return;
       }
 
@@ -280,35 +343,33 @@
       });
     }
 
-    // 4. SPIN
     spinBtn.onclick = () => {
       if (isSpinning || currentPool.length === 0) return;
       if (!eventSelector.value) { alert("請先選擇活動！"); return; }
       
-      // 決定獎品和人數
       let prizeName, countToDraw;
       
       if (currentSettings.length > 0) {
-        // 使用預設設定
         const val = prizeSelector.value.split("|");
         prizeName = val[0];
         countToDraw = parseInt(val[1]);
       } else {
-        // 使用手動輸入
         prizeName = manualPrize.value || "神秘禮物";
         countToDraw = parseInt(manualCount.value) || 1;
       }
       
+      // 檢查時只檢查「轉盤裡有人」(currentPool)，如果很多人Multiple=0，轉盤可能是空的
       const uniqueLeft = new Set(currentPool).size;
       if (uniqueLeft < countToDraw) {
-        alert(`人數不足！剩餘 ${uniqueLeft} 人，設定需抽 ${countToDraw} 人。`);
+        alert(`可中獎人數不足！剩餘 ${uniqueLeft} 人 (Multiple>0)，設定需抽 ${countToDraw} 人。`);
         return;
       }
 
       isSpinning = true;
       spinBtn.disabled = true;
+      eventSelector.disabled = true;
+      prizeSelector.disabled = true;
       
-      // 選出中獎者
       let roundWinners = [];
       let tempPool = [...currentPool];
       for(let k=0; k<countToDraw; k++) {
@@ -318,7 +379,6 @@
         tempPool = tempPool.filter(n => n !== winner);
       }
 
-      // 動畫
       let rotation = 0;
       let speed = 30;
       const animate = () => {
@@ -337,17 +397,19 @@
     function finishSpin(winners, prize) {
       isSpinning = false;
       spinBtn.disabled = false;
+      eventSelector.disabled = false;
+      prizeSelector.disabled = false;
       
       winners.forEach(w => sessionHistory.push({ name: w, prize: prize }));
       statusMsg.innerHTML = `🎉 恭喜 <b>${winners.join(", ")}</b> 獲得 ${prize}！`;
       
       updateWinnersDisplay();
       
-      // 如果是用下拉選單，自動跳到下一個獎品 (Optional, 但很方便)
       if (currentSettings.length > 0) {
          const currIdx = prizeSelector.selectedIndex;
          if (currIdx < prizeSelector.options.length - 1) {
             prizeSelector.selectedIndex = currIdx + 1;
+            prizeSelector.onchange(); 
          }
       }
 
@@ -356,7 +418,9 @@
         canvas.style.transform = `rotate(0deg)`;
         setTimeout(() => {
              canvas.style.transition = "transform 3s cubic-bezier(0.25, 0.1, 0.25, 1)";
-             resetCurrentPool(eventSelector.value); 
+             const val = prizeSelector.value.split("|");
+             const isLoyal = (val[2] === "true");
+             resetCurrentPool(eventSelector.value, isLoyal); 
         }, 50);
       }, 3000);
     }
@@ -374,11 +438,23 @@
       winnersList.innerHTML = html;
     }
 
+    manualLoyal.onchange = () => {
+       resetCurrentPool(eventSelector.value, manualLoyal.checked);
+       updateUIForLoyal(manualLoyal.checked);
+    };
+
     resetBtn.onclick = () => {
-      if(confirm("確定重置？紀錄將消失。")) {
+      if(confirm("確定重置？")) {
         sessionHistory = [];
         updateWinnersDisplay();
-        resetCurrentPool(eventSelector.value);
+        let isLoyal = false;
+        if(currentSettings.length > 0) {
+           const val = prizeSelector.value.split("|");
+           isLoyal = (val[2] === "true");
+        } else {
+           isLoyal = manualLoyal.checked;
+        }
+        resetCurrentPool(eventSelector.value, isLoyal);
       }
     };
 
