@@ -3,29 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🎉 Petopia Pro Draw (Final) 🎁</title>
+  <title>🎉 Petopia Pro Draw (Custom BG) 🎁</title>
   <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+      /* 👇 這裡設定預設(普通)背景圖 👇 */
+      background-image: url('https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=2070&auto=format&fit=crop'); 
+      background-size: cover;       /* 讓圖片填滿整個螢幕 */
+      background-position: center;  /* 圖片置中 */
+      background-repeat: no-repeat; /* 不要重複 */
+      background-attachment: fixed; /* 滾動時背景固定 */
+      
       font-family: 'Luckiest Guy', cursive, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
       padding: 20px;
+      transition: background-image 0.5s ease-in-out; /* 讓背景切換有淡入淡出效果 */
     }
     h1 {
-      color: #fff; text-shadow: 2px 2px 0px #ffb6b9, 4px 4px 0px rgba(0,0,0,0.2);
+      color: #fff; 
+      /* 加強文字陰影，確保在任何背景圖片上都看得清 */
+      text-shadow: 3px 3px 0px #000, 0 0 10px rgba(0,0,0,0.8);
       font-size: 2.2rem; text-align: center; margin-bottom: 20px;
     }
     .control-panel {
       background: rgba(255, 255, 255, 0.95);
       padding: 20px;
       border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
       width: 100%;
       max-width: 500px;
       display: flex;
@@ -77,7 +86,11 @@
     #spin { background: #ff6b6b; }
     #reset-round { background: #a29bfe; font-size: 0.9rem; margin-top: 10px; }
 
-    #status-msg { text-align: center; color: #fff; margin: 10px 0; min-height: 1.5em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); font-family: sans-serif; }
+    #status-msg { 
+      text-align: center; color: #fff; margin: 10px 0; min-height: 1.5em; 
+      text-shadow: 2px 2px 4px #000; /* 加強陰影 */
+      font-family: sans-serif; font-weight: bold;
+    }
     
     .winners-box {
       width: 100%; max-width: 500px; background: rgba(255,255,255,0.9);
@@ -144,12 +157,14 @@
   </div>
 
   <script>
-    // ✅ 這裡填入你的 Web App URL
     const webAppUrl = "https://script.google.com/macros/s/AKfycbyYM-kQ8vSsiVz6laIm0Loch66_kHbjLiMCijiwDoBfUlmeJZFLXc6UBRvN10fHK7v6qw/exec";
 
+    // 👇 在這裡設定你的圖片網址 👇
+    const bgNormal = "https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=2070&auto=format&fit=crop"; // 普通背景
+    const bgLoyal = "https://images.unsplash.com/photo-1577053644083-d9a2637b989e?q=80&w=2070&auto=format&fit=crop";  // VIP 背景 (金色/豪華感)
+
     let rawData = {};         
-    let currentPool = [];     // 真正的抽獎池 (有票的人)
-    let displayCount = 0;     // 顯示的人數 (包含0票的人)
+    let currentPool = [];     
     let sessionHistory = [];  
     let currentSettings = []; 
     let isSpinning = false;
@@ -174,6 +189,8 @@
       resizeCanvas();
       window.addEventListener("resize", resizeCanvas);
       fetchData();
+      // 初始化背景
+      document.body.style.backgroundImage = `url('${bgNormal}')`;
     }
 
     function resizeCanvas() {
@@ -188,11 +205,8 @@
         statusMsg.innerText = "連線 Google Sheet 中...";
         const res = await fetch(webAppUrl + "?t=" + new Date().getTime());
         const json = await res.json();
-        
         rawData = json; 
-
         const events = [...new Set(json.participants.map(p => p.event))].sort();
-        
         eventSelector.innerHTML = "<option disabled selected>👇 請選擇活動</option>";
         events.forEach(e => {
           const opt = document.createElement("option");
@@ -200,65 +214,54 @@
           opt.text = e;
           eventSelector.add(opt);
         });
-
         statusMsg.innerText = "✅ 載入完成";
-        
       } catch (e) {
         console.error(e);
         statusMsg.innerText = "❌ 錯誤: 請檢查網址或權限";
       }
     }
 
-    // 切換活動
     eventSelector.onchange = () => {
       sessionHistory = []; 
       updateWinnersDisplay();
-      
       const eventName = eventSelector.value;
       currentSettings = rawData.settings.filter(s => s.event === eventName);
-      
       updatePrizeDropdown();
       resetCurrentPool(eventName, false);
     };
 
-    // 切換獎品 -> 觸發 Loyal 檢查
     prizeSelector.onchange = () => {
       const val = prizeSelector.value.split("|");
       const isLoyalOnly = (val[2] === "true");
-      
       updateUIForLoyal(isLoyalOnly);
       resetCurrentPool(eventSelector.value, isLoyalOnly);
     };
 
+    // ✨ 這裡修改了背景切換邏輯
     function updateUIForLoyal(isLoyal) {
       if (isLoyal) {
         loyalBadge.style.display = "block";
-        document.body.style.background = "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"; 
+        document.body.style.backgroundImage = `url('${bgLoyal}')`; // 切換到 VIP 圖片
       } else {
         loyalBadge.style.display = "none";
-        document.body.style.background = "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)";
+        document.body.style.backgroundImage = `url('${bgNormal}')`; // 切換回 普通 圖片
       }
     }
 
     function updatePrizeDropdown() {
       prizeSelector.innerHTML = "";
-      
       if (currentSettings.length > 0) {
         manualArea.style.display = "none";
         prizeSelector.style.display = "block";
-        
         currentSettings.forEach(setting => {
            const opt = document.createElement("option");
            opt.value = `${setting.prize}|${setting.count}|${setting.loyalOnly}`;
-           
            let label = `${setting.prize} (抽 ${setting.count} 人)`;
            if(setting.loyalOnly) label = "👑 " + label;
-           
            opt.text = label;
            prizeSelector.add(opt);
         });
         prizeSelector.onchange(); 
-
       } else {
         prizeSelector.innerHTML = "<option>⚠️ 無預設設定</option>";
         prizeSelector.style.display = "none";
@@ -267,54 +270,32 @@
       }
     }
 
-    // 重置名單 (核心邏輯更新：Multiple=0 的人算人數，但不可抽)
     function resetCurrentPool(eventName, requireLoyal) {
       if (!eventName) return;
-
       const participants = rawData.participants.filter(p => p.event === eventName);
       const winnerNames = new Set(sessionHistory.map(w => w.name));
-
       currentPool = [];
-      let validCandidatesCount = 0; // 這是「分母」，包含 Multiple=0 的人
-
+      let validCandidatesCount = 0; 
       participants.forEach(p => {
-        // 1. 如果已經中獎 -> 跳過 (真跳過，不算入人數)
         if (winnerNames.has(p.name)) return;
-
-        // 2. 如果要求 Loyal 但不是 -> 跳過 (真跳過，不算入人數)
-        if (requireLoyal && p.loyal !== 'Y') {
-          return;
-        }
-
-        // 走到這裡的都是「符合資格」的參加者 (無論 multiple 是 0 還是 10)
+        if (requireLoyal && p.loyal !== 'Y') return;
         validCandidatesCount++;
-
-        // 3. 加入名單 (只有 Multiple > 0 的人才會進轉盤)
-        // 如果 multiple 是 0，這個迴圈跑 0 次，所以他不會進 currentPool
         for(let i=0; i < (p.multiple || 0); i++) {
           currentPool.push(p.name);
         }
       });
-      
       currentPool.sort(() => Math.random() - 0.5);
-
       let msg = `活動：<b>${eventName}</b> | 參與人數：${validCandidatesCount}`;
-      
-      if (requireLoyal) {
-        msg += ` <span style="color:#ffd700; font-weight:bold;">(已過濾非會員)</span>`;
-      }
+      if (requireLoyal) msg += ` <span style="color:#ffd700; font-weight:bold; text-shadow:1px 1px 2px #000;">(已過濾非會員)</span>`;
       statusMsg.innerHTML = msg;
-      
       drawWheel();
     }
 
     function drawWheel() {
       const size = canvas.width;
       ctx.clearRect(0, 0, size, size);
-      
       const distinctNames = [...new Set(currentPool)];
       const count = distinctNames.length;
-      
       if (count === 0) {
         ctx.fillStyle = "#ddd";
         ctx.beginPath(); ctx.arc(size/2, size/2, size/2 - 5, 0, Math.PI*2); ctx.fill();
@@ -322,10 +303,8 @@
         ctx.fillText("無人 / 0票", size/2, size/2);
         return;
       }
-
       const arc = Math.PI * 2 / count;
       const colors = ["#ff9ff3", "#feca57", "#ff6b6b", "#48dbfb", "#1dd1a1"];
-
       distinctNames.forEach((name, i) => {
         const angle = i * arc;
         ctx.beginPath();
@@ -333,7 +312,6 @@
         ctx.moveTo(size/2, size/2);
         ctx.arc(size/2, size/2, size/2 - 10, angle, angle + arc);
         ctx.fill(); ctx.stroke();
-        
         ctx.save();
         ctx.translate(size/2, size/2);
         ctx.rotate(angle + arc/2);
@@ -346,9 +324,7 @@
     spinBtn.onclick = () => {
       if (isSpinning || currentPool.length === 0) return;
       if (!eventSelector.value) { alert("請先選擇活動！"); return; }
-      
       let prizeName, countToDraw;
-      
       if (currentSettings.length > 0) {
         const val = prizeSelector.value.split("|");
         prizeName = val[0];
@@ -357,19 +333,15 @@
         prizeName = manualPrize.value || "神秘禮物";
         countToDraw = parseInt(manualCount.value) || 1;
       }
-      
-      // 檢查時只檢查「轉盤裡有人」(currentPool)，如果很多人Multiple=0，轉盤可能是空的
       const uniqueLeft = new Set(currentPool).size;
       if (uniqueLeft < countToDraw) {
-        alert(`可中獎人數不足！剩餘 ${uniqueLeft} 人 (Multiple>0)，設定需抽 ${countToDraw} 人。`);
+        alert(`人數不足！剩餘 ${uniqueLeft} 人 (Multiple>0)，設定需抽 ${countToDraw} 人。`);
         return;
       }
-
       isSpinning = true;
       spinBtn.disabled = true;
       eventSelector.disabled = true;
       prizeSelector.disabled = true;
-      
       let roundWinners = [];
       let tempPool = [...currentPool];
       for(let k=0; k<countToDraw; k++) {
@@ -378,7 +350,6 @@
         roundWinners.push(winner);
         tempPool = tempPool.filter(n => n !== winner);
       }
-
       let rotation = 0;
       let speed = 30;
       const animate = () => {
@@ -399,12 +370,9 @@
       spinBtn.disabled = false;
       eventSelector.disabled = false;
       prizeSelector.disabled = false;
-      
       winners.forEach(w => sessionHistory.push({ name: w, prize: prize }));
       statusMsg.innerHTML = `🎉 恭喜 <b>${winners.join(", ")}</b> 獲得 ${prize}！`;
-      
       updateWinnersDisplay();
-      
       if (currentSettings.length > 0) {
          const currIdx = prizeSelector.selectedIndex;
          if (currIdx < prizeSelector.options.length - 1) {
@@ -412,7 +380,6 @@
             prizeSelector.onchange(); 
          }
       }
-
       setTimeout(() => {
         canvas.style.transition = "none";
         canvas.style.transform = `rotate(0deg)`;
