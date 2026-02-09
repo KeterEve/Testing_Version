@@ -3,27 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🎉 Petopia Pro Draw (Custom BG) 🎁</title>
+  <title>🎉 Petopia Pro Draw (Smooth Edition) 🎁</title>
   <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
+    
+    /* ✨ 優化 1：背景獨立層 (解決抖動問題的核心) */
+    #bg-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1; /* 放在最底層 */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transition: background-image 0.5s ease-in-out;
+      /* 預設背景圖 (如果 JS 載入慢) */
+      background-image: url('https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=2070&auto=format&fit=crop');
+    }
+
     body {
       margin: 0;
-      /* 👇 預設背景圖 👇 */
-      background-image: url('https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=2070&auto=format&fit=crop'); 
-      background-size: cover;       
-      background-position: center;  
-      background-repeat: no-repeat; 
-      background-attachment: fixed; 
-      
       font-family: 'Luckiest Guy', cursive, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
       padding: 20px;
-      transition: background-image 0.5s ease-in-out;
+      overflow-x: hidden; /* 防止水平捲軸出現導致抖動 */
     }
+
     h1 {
       color: #fff; 
       text-shadow: 3px 3px 0px #000, 0 0 10px rgba(0,0,0,0.8);
@@ -65,6 +76,8 @@
 
     #wheel-container {
       position: relative; width: 300px; height: 300px; margin: 20px auto;
+      /* ✨ 優化 2：開啟硬體加速，讓旋轉更順 */
+      transform: translateZ(0); 
     }
     #wheel {
       width: 100%; height: 100%; border-radius: 50%;
@@ -107,6 +120,8 @@
   </style>
 </head>
 <body>
+
+  <div id="bg-layer"></div>
 
   <h1>🎉 PETOPIA PRO DRAW 🎁</h1>
 
@@ -160,7 +175,7 @@
 
     // 背景圖設定
     const bgNormal = "https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=2070&auto=format&fit=crop"; 
-    const bgLoyal = "https://img.freepik.com/free-vector/flat-design-paw-prints-background_23-2151163102.jpg?semt=ais_hybrid&w=740&q=80"; 
+    const bgLoyal = "https://images.unsplash.com/photo-1577053644083-d9a2637b989e?q=80&w=2070&auto=format&fit=crop"; 
 
     let rawData = {};         
     let currentPool = [];     
@@ -182,12 +197,14 @@
     const winnersList = document.getElementById("winnersList");
     const spinBtn = document.getElementById("spin");
     const resetBtn = document.getElementById("reset-round");
+    const bgLayer = document.getElementById("bg-layer"); // ✨ 新增：背景層控制
 
     function init() {
       resizeCanvas();
       window.addEventListener("resize", resizeCanvas);
       fetchData();
-      document.body.style.backgroundImage = `url('${bgNormal}')`;
+      // 初始化背景
+      bgLayer.style.backgroundImage = `url('${bgNormal}')`;
     }
 
     function resizeCanvas() {
@@ -237,10 +254,10 @@
     function updateUIForLoyal(isLoyal) {
       if (isLoyal) {
         loyalBadge.style.display = "block";
-        document.body.style.backgroundImage = `url('${bgLoyal}')`; 
+        bgLayer.style.backgroundImage = `url('${bgLoyal}')`; // ✨ 改為控制 bg-layer
       } else {
         loyalBadge.style.display = "none";
-        document.body.style.backgroundImage = `url('${bgNormal}')`; 
+        bgLayer.style.backgroundImage = `url('${bgNormal}')`; 
       }
     }
 
@@ -283,8 +300,6 @@
       currentPool.sort(() => Math.random() - 0.5);
       
       let msg = `活動：<b>${eventName}</b> | 參與人數：${validCandidatesCount}`;
-      // ✅ 修改 2：這裡移除了「(已過濾非會員)」的顯示代碼
-      
       statusMsg.innerHTML = msg;
       drawWheel();
     }
